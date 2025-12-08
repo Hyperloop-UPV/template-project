@@ -4,7 +4,7 @@ project(template-project LANGUAGES ASM C CXX)
 
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(STLIB_DIR  ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
-set(LD_SCRIPT  ${CMAKE_SOURCE_DIR}/STM32H723ZGTX_FLASH.ld)
+set(LD_SCRIPT  ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
 set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
 
 option(USE_ETHERNET  "Enable ethernet peripheral"                 OFF)
@@ -28,7 +28,7 @@ add_executable(${EXECUTABLE}
   ${SOURCE_H}
   ${SOURCE_HPP}
 
-  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${CMAKE_SOURCE_DIR}/Core/Startup/startup_stm32h723zgtx.s>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/startup_stm32h723zgtx.s>
 )
 
 target_link_libraries(${EXECUTABLE} PRIVATE

@@ -69,7 +69,7 @@ extern "C" {
 /* #define HAL_RNG_MODULE_ENABLED   */
 #define HAL_RTC_MODULE_ENABLED
 /* #define HAL_SAI_MODULE_ENABLED   */
-/* #define HAL_SD_MODULE_ENABLED   */
+#define HAL_SD_MODULE_ENABLED   
 /* #define HAL_MMC_MODULE_ENABLED   */
 /* #define HAL_SPDIFRX_MODULE_ENABLED   */
 #define HAL_SPI_MODULE_ENABLED
@@ -82,7 +82,7 @@ extern "C" {
 /* #define HAL_WWDG_MODULE_ENABLED   */
 /* #define HAL_PCD_MODULE_ENABLED   */
 /* #define HAL_HCD_MODULE_ENABLED   */
-/* #define HAL_DFSDM_MODULE_ENABLED   */
+#define HAL_DFSDM_MODULE_ENABLED
 /* #define HAL_DSI_MODULE_ENABLED   */
 /* #define HAL_JPEG_MODULE_ENABLED   */
 /* #define HAL_MDIOS_MODULE_ENABLED   */
@@ -291,7 +291,7 @@ extern "C" {
  * @brief Uncomment the line below to expanse the "assert_param" macro in the
  *        HAL drivers code
  */
-/* #define USE_FULL_ASSERT    1U */
+#define USE_FULL_ASSERT    1U
 
 /* Includes ------------------------------------------------------------------*/
 /**
