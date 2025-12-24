@@ -3,6 +3,8 @@
 // #include "C++Utilities/CppUtils.hpp"
 #include "lwip/apps/tftp_server.h"
 #include "ST-LIB.hpp"
+#include "Flash.hpp"
+
 
 
 #define TFTP_MAX_DATA_SIZE 					 ((uint16_t)512U)
@@ -44,6 +46,7 @@ public:
 
 
 	static btftp_file_t* file;
+	static inline volatile bool end_bootloader{false};
 
 	static void start();
 
@@ -51,7 +54,6 @@ public:
 
 	static void off();
 
-    static volatile int debug_state;
 
 private:
 	static volatile bool ready;
