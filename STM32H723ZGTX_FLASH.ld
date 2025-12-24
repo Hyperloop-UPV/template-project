@@ -37,15 +37,15 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM_D1) + LENGTH(RAM_D1);    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
+_Min_Heap_Size = 0x2000;      /* required amount of heap (8KB) */
+_Min_Stack_Size = 0x4000; /* required amount of stack (16KB) */
 
 /* Specify the memory areas */
 MEMORY
 {
   ITCMRAM (xrw)    : ORIGIN = 0x00000000,   LENGTH = 64K
   DTCMRAM (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
-  FLASH    (rx)    : ORIGIN = 0x08000000,   LENGTH = 1024K-128K
+  FLASH    (rx)    : ORIGIN = 0x080E0000,   LENGTH = 128K
   RAM_D1  (xrw)    : ORIGIN = 0x24000000,   LENGTH = 320K
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
@@ -134,21 +134,7 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
   } >RAM_D1 AT> FLASH
-  /*
-    this needs to be the last thing in FLASH
-    because the preceeding sections are appended after the one preceeding them
-    this is, if this were the first thing in FLASH
-    the sections below it would try to be placed afterwards
-    thus overflowing the FLASH
-  */
-  .metadata_pool :
-  {
-  	. = ABSOLUTE(0x080DFD00);
-    . = ALIGN(4);
-    metadata = .;
-    KEEP(*(.metadata_pool))
-    . += 0x100;
-  } >FLASH
+
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss (NOLOAD) :

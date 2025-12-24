@@ -7,6 +7,7 @@ set(STLIB_DIR  ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(LD_SCRIPT  ${CMAKE_SOURCE_DIR}/STM32H723ZGTX_FLASH.ld)
 set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
 
+
 option(USE_ETHERNET  "Enable ethernet peripheral"                 OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo dev board"     OFF)
 
@@ -49,11 +50,12 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
 )
 
 target_compile_options(${EXECUTABLE} PRIVATE
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Os>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mcpu=cortex-m7>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfpu=fpv5-d16>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mfloat-abi=hard>
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-mthumb>
-  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nosys.specs>
+$<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nano.specs>
 
   -ffunction-sections
   -fdata-sections
@@ -88,13 +90,6 @@ target_link_options(${EXECUTABLE} PRIVATE
   $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,--gc-sections>
 )
 
-add_custom_target(generate_binary_metadata ALL
-  COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/tools/generate_binary_metadata.py
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  COMMENT "Generating binary metadata"
-)
-add_dependencies(${EXECUTABLE} generate_binary_metadata)
-
 if (PROJECT_IS_TOP_LEVEL)
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -112,3 +107,12 @@ if (PROJECT_IS_TOP_LEVEL)
             ${CMAKE_CURRENT_SOURCE_DIR}/out/build/latest.elf
   )
 endif()
+
+target_compile_definitions(${EXECUTABLE} PRIVATE
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:USE_HAL_DRIVER>
+  $<$<BOOL:${CMAKE_CROSSCOMPILING}>:STM32H723xx>
+
+  $<$<BOOL:${USE_ETHERNET}>:STLIB_ETH>
+  $<IF:$<BOOL:${TARGET_NUCLEO}>,NUCLEO,BOARD>
+  $<IF:$<BOOL:${TARGET_NUCLEO}>,HSE_VALUE=8000000,HSE_VALUE=25000000>
+)
