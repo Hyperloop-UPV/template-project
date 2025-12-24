@@ -20,7 +20,8 @@
         "source": "probe",
         "decoders": [{ "type": "console", "label": "ITM", "port": 0 }]
       },
-      "preLaunchTask": "CMake: build"
+      "preLaunchTask": "CMake: build",
+      "stm32cubeprogrammer":"/home/danielcanto/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin",
     },
     {
       "type": "cortex-debug",
