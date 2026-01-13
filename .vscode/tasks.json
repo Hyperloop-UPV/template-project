@@ -7,6 +7,25 @@
         "command": "ROSETTA_DEBUGSERVER_PORT=1234 ./out/build/latest.elf",
         "problemMatcher": [],
         "isBackground": true
+      },
+      {
+        "label": "Pre-flash check",
+        "type": "shell",
+        "command": "${workspaceFolder}/virtual/Scripts/python",
+        "args": [
+          "${workspaceFolder}/tools/preflash_check.py"
+        ],
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "CMake: build then pre-flash check",
+        "dependsOn": ["CMake: build", "Pre-flash check"],
+        "dependsOrder": "sequence",
+        "problemMatcher": []
       }
     ]
   }

@@ -5,8 +5,11 @@ project(template-project LANGUAGES ASM C CXX)
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(STLIB_DIR  ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(LD_SCRIPT  ${CMAKE_SOURCE_DIR}/STM32H723ZGTX_FLASH.ld)
-set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
-
+if(CMAKE_HOST_WIN32 )
+  set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/Scripts/python)
+else()
+  set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
+endif()
 option(USE_ETHERNET  "Enable ethernet peripheral"                 OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo dev board"     OFF)
 
@@ -93,22 +96,36 @@ add_custom_target(generate_binary_metadata ALL
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Generating binary metadata"
 )
-add_dependencies(${EXECUTABLE} generate_binary_metadata)
 
+add_dependencies(${EXECUTABLE} generate_binary_metadata)
 if (PROJECT_IS_TOP_LEVEL)
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_BINARY_DIR}/compile_commands.json
       ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
   )
+endif()
+# Post-build: Copy binary to out/build/latest.elf and create marker for BOARD builds
+add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+  # Create output directory
+  COMMAND ${CMAKE_COMMAND} -E make_directory
+          ${CMAKE_SOURCE_DIR}/out/build
+  # Copy the built binary to out/build/latest.elf
+  COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_FILE:${EXECUTABLE}>
+          ${CMAKE_SOURCE_DIR}/out/build/latest.elf
+  COMMENT "Copying ${EXECUTABLE} to out/build/latest.elf"
+)
 
-  add_custom_command(
-    TARGET ${EXECUTABLE}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/out/build
-    COMMAND ${CMAKE_COMMAND} -E create_symlink
-            $<TARGET_FILE:${EXECUTABLE}>
-            ${CMAKE_CURRENT_SOURCE_DIR}/out/build/latest.elf
+# Create or remove marker file for BOARD builds (used by preflash_check.py)
+if(NOT TARGET_NUCLEO)
+  add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/out/build/board_build_marker
+    COMMENT "Creating BOARD build marker for pre-flash check"
+  )
+else()
+  add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${CMAKE_SOURCE_DIR}/out/build/board_build_marker
+    COMMENT "Removing BOARD build marker (NUCLEO build)"
   )
 endif()
