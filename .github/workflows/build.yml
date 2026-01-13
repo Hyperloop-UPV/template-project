@@ -34,7 +34,7 @@ jobs:
       packages: read
 
     container:
-      image: ghcr.io/hyperloopupv-h8/hyperloop-firmware-toolchain:latest
+      image: ghcr.io/hyperloop-upv/hyperloop-firmware-toolchain:latest
 
     outputs:
       build-artifact: ${{ steps.upload-build-artifact.outputs.artifact-id }}
