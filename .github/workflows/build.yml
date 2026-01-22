@@ -4,21 +4,24 @@ on:
   workflow_call:
     inputs:
       preset:
-        description: |
-          'CMake preset to build the project, run `cmake --build --list-presets' to see a complete list of options'
-        required: true
+        description: >
+          CMake preset to build the project, run
+          `cmake --build --list-presets` to see options
+        required: false
         type: string
         default: 'nucleo-debug'
     outputs:
       build-artifact:
         description: 'Build result artifact id for later use'
         value: ${{ jobs.build.outputs.build-artifact }}
+
   workflow_dispatch:
     inputs:
       preset:
-        description: |
-          'CMake preset to build the project, run `cmake --build --list-presets' to see a complete list of options'
-        required: true
+        description: >
+          CMake preset to build the project, run
+          `cmake --build --list-presets` to see options
+        required: false
         type: string
         default: 'nucleo-debug'
 
@@ -26,35 +29,45 @@ jobs:
   build:
     name: Build Project
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+
+    container:
+      image: ghcr.io/hyperloop-upv/hyperloop-firmware-toolchain:latest
+
     outputs:
       build-artifact: ${{ steps.upload-build-artifact.outputs.artifact-id }}
-    container:
-      image: jmaralo/hyperloop-upv-firmware:latest
+
     steps:
-      - name: Clone Project
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
-      - name: Configure
+          submodules: false
+          fetch-depth: 1
+
+      - name: Init submodules
         run: |
-          apt install -y python3.12-venv 
-          python3 -m venv .
-          source bin/activate
+          git config --global --add safe.directory '*'
+          git submodule update --init --depth 1
+          ./deps/ST-LIB/tools/init-submodules.sh 
+        shell: bash
+
+      - name: Setup Python environment
+        run: |
+          python3 -m venv virtual
+          source virtual/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
         shell: bash
+
       - name: Build
         run: |
-          source bin/activate
-          cmake --preset ${{ inputs.preset }} .
+          source virtual/bin/activate
+          cmake --preset ${{ inputs.preset }}
           cmake --build --preset ${{ inputs.preset }}
         shell: bash
-      - name: Run Simulator Tests
-        if: inputs.preset == 'simulator'
-        run: |
-          cd Tests
-          echo "Running tests against $(cd .. && pwd)/out/build/simulator/latest.elf"
-          set -e
-          python3 test.py -uut="$(cd .. && pwd)/out/build/latest.elf"
+
       - name: Upload Build
         id: upload-build-artifact
         uses: actions/upload-artifact@v4
@@ -64,4 +77,3 @@ jobs:
           retention-days: 7
           compression-level: 0
           if-no-files-found: error
-

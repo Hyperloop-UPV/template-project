@@ -9,7 +9,11 @@ This makes use of the [ST-LIB](https://github.com/HyperloopUPV-H8/ST-LIB) develo
 ## Container Setup
 To use it you must install [Dev Containers extension on VSCode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) and [Docker](https://www.docker.com). Be careful to use the instructions related to your OS, as docker not works in the same way exactly between them.
 Then, when you open this folder in VSCode, you will have the ability to reopen it inside the container. Don't worry, the first time you do it takes a loong time.
+## SetUp
+Create a virtual environment with
+>python3 -m venv virtual
 
+at the root of the project
 ## Modes
 ### Simulator
 The container is fully ready to develop, compile and debug the code in simulator mode, so you don't have to worry about setting your environment

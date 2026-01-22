@@ -4,7 +4,7 @@
 
 # Python
 __pycache__/
-
+virtual/
 # Build
 Debug/
 Release/
