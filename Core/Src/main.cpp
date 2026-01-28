@@ -16,6 +16,7 @@ int main(void) {
 
     DigitalOutput led_on(PB0);
     STLIB::start();
+    HAL_Delay(200);  // Flash 2: Increased delay
 
     Time::register_low_precision_alarm(100, [&]() { led_on.toggle(); 
     });
