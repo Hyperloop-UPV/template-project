@@ -95,6 +95,18 @@ def branch_exists(repo_path: Path, branch_name: str) -> bool:
     return bool(result.stdout.strip())
 
 
+def is_ancestor(repo_path: Path, ancestor: str, descendant: str) -> bool:
+    """Check if 'ancestor' is an ancestor of 'descendant'."""
+    result = run_git(repo_path, ["merge-base", "--is-ancestor", ancestor, descendant], check=False)
+    return result.returncode == 0
+
+
+def get_branch_commit(repo_path: Path, branch_name: str) -> str:
+    """Get the commit hash that a branch points to."""
+    result = run_git(repo_path, ["rev-parse", branch_name], check=False)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
 def stash_changes(repo_path: Path) -> bool:
     """Stash all changes including untracked files. Returns True if something was stashed."""
     if not has_uncommitted_changes(repo_path):
@@ -235,15 +247,23 @@ def auto_commit_submodule(workspace_dir: Path, submodule_path: str, parent_branc
         print(f"  Stashing changes...")
         stash_created = stash_changes(submodule_full_path)
 
-        # 2. Checkout/create temp branch - always reset to original_commit
-        # History preservation happens at push time via pull-and-merge
+        # 2. Handle temp branch
+        # Only reset if temp branch is behind original_commit (needs to catch up)
+        # If temp branch is ahead or equal, build on top of it (no reset needed)
         if branch_exists(submodule_full_path, TEMP_BRANCH):
+            temp_branch_commit = get_branch_commit(submodule_full_path, TEMP_BRANCH)
             print(f"  Checking out existing branch '{TEMP_BRANCH}'...")
             checkout_ref(submodule_full_path, TEMP_BRANCH, is_branch=True)
             on_temp_branch = True
-            # Reset to current HEAD - merge will happen at push time if needed
-            print(f"  Resetting to current HEAD ({original_commit[:8]})...")
-            run_git(submodule_full_path, ["reset", "--hard", original_commit])
+            
+            # Check if original_commit is already in temp branch's history
+            if is_ancestor(submodule_full_path, original_commit, temp_branch_commit):
+                # Temp branch is ahead of or at original_commit - no reset needed
+                print(f"  Branch '{TEMP_BRANCH}' is up to date, building on top...")
+            else:
+                # Temp branch is behind or diverged - reset to original_commit
+                print(f"  Resetting to current HEAD ({original_commit[:8]})...")
+                run_git(submodule_full_path, ["reset", "--hard", original_commit])
         else:
             print(f"  Creating new branch '{TEMP_BRANCH}'...")
             create_branch(submodule_full_path, TEMP_BRANCH, original_commit)
@@ -251,11 +271,16 @@ def auto_commit_submodule(workspace_dir: Path, submodule_path: str, parent_branc
             on_temp_branch = True
 
         # 3. Pop stash to apply changes on temp branch
-        # Since we reset to the same commit we stashed from, this should always work
         if stash_created:
             print(f"  Applying changes to temp branch...")
             if not pop_stash(submodule_full_path):
-                raise RuntimeError(f"Failed to apply stashed changes to {submodule_path}")
+                # Stash pop failed - conflicts with temp branch state
+                # Fall back: reset to original_commit where stash was created
+                print(f"  Stash conflict detected. Falling back to reset approach...")
+                run_git(submodule_full_path, ["reset", "--hard"], check=False)
+                run_git(submodule_full_path, ["reset", "--hard", original_commit])
+                if not pop_stash(submodule_full_path):
+                    raise RuntimeError(f"Failed to apply stashed changes to {submodule_path}")
             stash_created = False  # Stash was consumed
 
         # 4. Commit all changes
@@ -370,15 +395,23 @@ def auto_commit_to_temp_branch(workspace_dir: Path, submodule_paths_to_stage: li
         print("Stashing current changes...")
         stash_created = stash_changes(workspace_dir)
 
-        # 2. Handle temp branch - always reset to original_commit
-        # History preservation happens at push time via pull-and-merge
+        # 2. Handle temp branch
+        # Only reset if temp branch is behind original_commit (needs to catch up)
+        # If temp branch is ahead or equal, build on top of it (no reset needed)
         if branch_exists(workspace_dir, TEMP_BRANCH):
+            temp_branch_commit = get_branch_commit(workspace_dir, TEMP_BRANCH)
             print(f"Checking out existing branch '{TEMP_BRANCH}'...")
             checkout_ref(workspace_dir, TEMP_BRANCH, is_branch=True)
             on_temp_branch = True
-            # Reset to current HEAD - merge will happen at push time if needed
-            print(f"Resetting to current HEAD ({original_commit[:8]})...")
-            run_git(workspace_dir, ["reset", "--hard", original_commit])
+            
+            # Check if original_commit is already in temp branch's history
+            if is_ancestor(workspace_dir, original_commit, temp_branch_commit):
+                # Temp branch is ahead of or at original_commit - no reset needed
+                print(f"Branch '{TEMP_BRANCH}' is up to date, building on top...")
+            else:
+                # Temp branch is behind or diverged - reset to original_commit
+                print(f"Resetting to current HEAD ({original_commit[:8]})...")
+                run_git(workspace_dir, ["reset", "--hard", original_commit])
         else:
             print(f"Creating new branch '{TEMP_BRANCH}'...")
             create_branch(workspace_dir, TEMP_BRANCH, original_commit)
@@ -386,11 +419,16 @@ def auto_commit_to_temp_branch(workspace_dir: Path, submodule_paths_to_stage: li
             on_temp_branch = True
 
         # 3. Pop stash to apply changes on temp branch
-        # Since we reset to the same commit we stashed from, this should always work
         if stash_created:
             print("Applying changes to temp branch...")
             if not pop_stash(workspace_dir):
-                raise RuntimeError("Failed to apply stashed changes to temp branch")
+                # Stash pop failed - conflicts with temp branch state
+                # Fall back: reset to original_commit where stash was created
+                print("Stash conflict detected. Falling back to reset approach...")
+                run_git(workspace_dir, ["reset", "--hard"], check=False)  # Clean up conflict state
+                run_git(workspace_dir, ["reset", "--hard", original_commit])
+                if not pop_stash(workspace_dir):
+                    raise RuntimeError("Failed to apply stashed changes to temp branch")
             stash_created = False  # Stash was consumed
 
         # 4. Commit all changes
