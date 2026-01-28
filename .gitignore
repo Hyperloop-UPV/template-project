@@ -2,6 +2,9 @@
 # |        General        |
 # *-----------------------*
 
+# Generated metadata (regenerated at build/flash time)
+Core/Src/Runes/generated_metadata.cpp
+
 # Python
 __pycache__/
 virtual/
