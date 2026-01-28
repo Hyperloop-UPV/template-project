@@ -161,8 +161,8 @@ def push_to_remote(repo_path: Path, branch_name: str) -> bool:
     """Push branch to origin. Returns True on success, False on failure.
     
     If push is rejected due to non-fast-forward (diverged history), 
-    fetches remote and merges before retrying push. This preserves
-    history of previous auto-flash commits on the remote.
+    fetches remote and rebases local commit on top. This preserves
+    history of previous auto-flash commits while keeping a linear history.
     """
     # 1. Try normal push first
     result = run_git(repo_path, ["push", "-u", "origin", branch_name], check=False)
@@ -174,21 +174,21 @@ def push_to_remote(repo_path: Path, branch_name: str) -> bool:
         return False  # Some other error (e.g., no network)
     
     # 3. Fetch remote branch
-    print(f"  Push rejected (diverged history). Fetching and merging remote...")
+    print(f"  Push rejected (diverged history). Fetching and rebasing...")
     fetch_result = run_git(repo_path, ["fetch", "origin", branch_name], check=False)
     if fetch_result.returncode != 0:
         print(f"  Failed to fetch remote branch.")
         return False
     
-    # 4. Merge remote into local
-    merge_result = run_git(repo_path, ["merge", f"origin/{branch_name}", "--no-edit"], check=False)
-    if merge_result.returncode != 0 or has_merge_conflicts(repo_path):
-        # Merge conflict - abort and give up
-        print(f"  Merge conflict with remote. Aborting merge.")
-        run_git(repo_path, ["merge", "--abort"], check=False)
+    # 4. Rebase local commit onto remote (keeps linear history, no merge commits)
+    rebase_result = run_git(repo_path, ["rebase", f"origin/{branch_name}"], check=False)
+    if rebase_result.returncode != 0:
+        # Rebase conflict - abort and give up
+        print(f"  Rebase conflict with remote. Aborting rebase.")
+        run_git(repo_path, ["rebase", "--abort"], check=False)
         return False
     
-    print(f"  Merged remote changes successfully.")
+    print(f"  Rebased successfully onto remote.")
     
     # 5. Retry push
     retry_result = run_git(repo_path, ["push", "-u", "origin", branch_name], check=False)
