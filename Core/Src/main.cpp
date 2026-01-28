@@ -18,7 +18,7 @@ int main(void) {
     STLIB::start();
     HAL_Delay(200);  // Flash 2: Increased delay
 
-    Time::register_low_precision_alarm(100, [&]() { led_on.toggle(); 
+    Time::register_low_precision_alarm(200, [&]() { led_on.toggle();  // Flash 3: Changed alarm interval 
     });
 
     while (1) {
