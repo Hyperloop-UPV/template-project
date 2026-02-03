@@ -17,6 +17,7 @@ ADC_HandleTypeDef hadc3;
 LPTIM_HandleTypeDef hlptim1;
 LPTIM_HandleTypeDef hlptim2;
 LPTIM_HandleTypeDef hlptim3;
+#if 0
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -30,6 +31,7 @@ TIM_HandleTypeDef htim17;
 TIM_HandleTypeDef htim15;
 TIM_HandleTypeDef htim23;
 TIM_HandleTypeDef htim24;
+#endif
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
