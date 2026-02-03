@@ -1,20 +1,20 @@
 #pragma once
 #include "ST-LIB.hpp"
 #include "memory"
-enum class GeneralStateMachineStatus {
+enum class GeneralStateMachineStatus: uint8_t {
     CONNECTING,
     OPERATIONAL,
     FAULT
 };
 
-enum class OperationalStateMachineStatus {
+enum class OperationalStateMachineStatus: uint8_t {
     HV_OPEN,
     PRECHARGE,
     HV_CLOSED,
     CHARGING
 };
 
-enum class ImdStatus {
+enum class ImdStatus: uint8_t{
     SHORTCIRCUIT,
     NORMAL,
     UNDERVOLTAGE,
@@ -23,257 +23,258 @@ enum class ImdStatus {
     GROUNDING_FAULT
 };
 
-enum class SdcStatus {
+enum class SdcStatus:uint8_t {
     ENGAGED,
     DISENGAGED
 };
 
-enum class BmsStatus {
+enum class BmsStatus:uint8_t {
     OK,
     FAULT
 };
+namespace var {
 
-namespace var{
-float battery1_SOC;
-float battery1_cell1;
-float battery1_cell2;
-float battery1_cell3;
-float battery1_cell4;
-float battery1_cell5;
-float battery1_cell6;
-float battery1_temperature1;
-float battery1_temperature2;
-float battery1_total_voltage;
-float battery1_conv_rate;
+inline float battery1_SOC = 77.3f;
+inline float battery1_cell1 = 3.7f;
+inline float battery1_cell2 = 3.8f;
+inline float battery1_cell3 = 3.75f;
+inline float battery1_cell4 = 3.72f;
+inline float battery1_cell5 = 3.78f;
+inline float battery1_cell6 = 3.76f;
+inline float battery1_temperature1 = 32.1f;
+inline float battery1_temperature2 = 31.9f;
+inline float battery1_total_voltage = 22.5f;
+inline float battery1_conv_rate = 0.95f;
 
-float battery2_SOC;
-float battery2_cell1;
-float battery2_cell2;
-float battery2_cell3;
-float battery2_cell4;
-float battery2_cell5;
-float battery2_cell6;
-float battery2_temperature1;
-float battery2_temperature2;
-float battery2_total_voltage;
-float battery2_conv_rate;
+inline float battery2_SOC = 79.1f;
+inline float battery2_cell1 = 3.71f;
+inline float battery2_cell2 = 3.82f;
+inline float battery2_cell3 = 3.76f;
+inline float battery2_cell4 = 3.73f;
+inline float battery2_cell5 = 3.77f;
+inline float battery2_cell6 = 3.75f;
+inline float battery2_temperature1 = 32.3f;
+inline float battery2_temperature2 = 31.8f;
+inline float battery2_total_voltage = 22.6f;
+inline float battery2_conv_rate = 0.96f;
 
-float battery3_SOC;
-float battery3_cell1;
-float battery3_cell2;
-float battery3_cell3;
-float battery3_cell4;
-float battery3_cell5;
-float battery3_cell6;
-float battery3_temperature1;
-float battery3_temperature2;
-float battery3_total_voltage;
-float battery3_conv_rate;
+inline float battery3_SOC = 78.0f;
+inline float battery3_cell1 = 3.69f;
+inline float battery3_cell2 = 3.81f;
+inline float battery3_cell3 = 3.74f;
+inline float battery3_cell4 = 3.72f;
+inline float battery3_cell5 = 3.76f;
+inline float battery3_cell6 = 3.77f;
+inline float battery3_temperature1 = 32.0f;
+inline float battery3_temperature2 = 31.7f;
+inline float battery3_total_voltage = 22.4f;
+inline float battery3_conv_rate = 0.94f;
 
-float battery4_SOC;
-float battery4_cell1;
-float battery4_cell2;
-float battery4_cell3;
-float battery4_cell4;
-float battery4_cell5;
-float battery4_cell6;
-float battery4_temperature1;
-float battery4_temperature2;
-float battery4_total_voltage;
-float battery4_conv_rate;
+inline float battery4_SOC = 76.5f;
+inline float battery4_cell1 = 3.68f;
+inline float battery4_cell2 = 3.79f;
+inline float battery4_cell3 = 3.73f;
+inline float battery4_cell4 = 3.71f;
+inline float battery4_cell5 = 3.75f;
+inline float battery4_cell6 = 3.74f;
+inline float battery4_temperature1 = 31.9f;
+inline float battery4_temperature2 = 31.6f;
+inline float battery4_total_voltage = 22.3f;
+inline float battery4_conv_rate = 0.93f;
 
-float battery5_SOC;
-float battery5_cell1;
-float battery5_cell2;
-float battery5_cell3;
-float battery5_cell4;
-float battery5_cell5;
-float battery5_cell6;
-float battery5_temperature1;
-float battery5_temperature2;
-float battery5_total_voltage;
-float battery5_conv_rate;
+inline float battery5_SOC = 80.2f;
+inline float battery5_cell1 = 3.72f;
+inline float battery5_cell2 = 3.83f;
+inline float battery5_cell3 = 3.77f;
+inline float battery5_cell4 = 3.74f;
+inline float battery5_cell5 = 3.78f;
+inline float battery5_cell6 = 3.76f;
+inline float battery5_temperature1 = 32.4f;
+inline float battery5_temperature2 = 32.0f;
+inline float battery5_total_voltage = 22.7f;
+inline float battery5_conv_rate = 0.97f;
 
-float battery6_SOC;
-float battery6_cell1;
-float battery6_cell2;
-float battery6_cell3;
-float battery6_cell4;
-float battery6_cell5;
-float battery6_cell6;
-float battery6_temperature1;
-float battery6_temperature2;
-float battery6_total_voltage;
-float battery6_conv_rate;
+inline float battery6_SOC = 75.8f;
+inline float battery6_cell1 = 3.67f;
+inline float battery6_cell2 = 3.78f;
+inline float battery6_cell3 = 3.72f;
+inline float battery6_cell4 = 3.70f;
+inline float battery6_cell5 = 3.74f;
+inline float battery6_cell6 = 3.73f;
+inline float battery6_temperature1 = 31.8f;
+inline float battery6_temperature2 = 31.5f;
+inline float battery6_total_voltage = 22.2f;
+inline float battery6_conv_rate = 0.92f;
 
-float battery7_SOC;
-float battery7_cell1;
-float battery7_cell2;
-float battery7_cell3;
-float battery7_cell4;
-float battery7_cell5;
-float battery7_cell6;
-float battery7_temperature1;
-float battery7_temperature2;
-float battery7_total_voltage;
-float battery7_conv_rate;
+inline float battery7_SOC = 79.5f;
+inline float battery7_cell1 = 3.71f;
+inline float battery7_cell2 = 3.82f;
+inline float battery7_cell3 = 3.76f;
+inline float battery7_cell4 = 3.73f;
+inline float battery7_cell5 = 3.77f;
+inline float battery7_cell6 = 3.75f;
+inline float battery7_temperature1 = 32.2f;
+inline float battery7_temperature2 = 31.9f;
+inline float battery7_total_voltage = 22.6f;
+inline float battery7_conv_rate = 0.95f;
 
-float battery8_SOC;
-float battery8_cell1;
-float battery8_cell2;
-float battery8_cell3;
-float battery8_cell4;
-float battery8_cell5;
-float battery8_cell6;
-float battery8_temperature1;
-float battery8_temperature2;
-float battery8_total_voltage;
-float battery8_conv_rate;
+inline float battery8_SOC = 78.8f;
+inline float battery8_cell1 = 3.70f;
+inline float battery8_cell2 = 3.81f;
+inline float battery8_cell3 = 3.75f;
+inline float battery8_cell4 = 3.72f;
+inline float battery8_cell5 = 3.76f;
+inline float battery8_cell6 = 3.74f;
+inline float battery8_temperature1 = 32.1f;
+inline float battery8_temperature2 = 31.8f;
+inline float battery8_total_voltage = 22.5f;
+inline float battery8_conv_rate = 0.94f;
 
-float battery9_SOC;
-float battery9_cell1;
-float battery9_cell2;
-float battery9_cell3;
-float battery9_cell4;
-float battery9_cell5;
-float battery9_cell6;
-float battery9_temperature1;
-float battery9_temperature2;
-float battery9_total_voltage;
-float battery9_conv_rate;
+inline float battery9_SOC = 77.9f;
+inline float battery9_cell1 = 3.69f;
+inline float battery9_cell2 = 3.80f;
+inline float battery9_cell3 = 3.74f;
+inline float battery9_cell4 = 3.71f;
+inline float battery9_cell5 = 3.75f;
+inline float battery9_cell6 = 3.73f;
+inline float battery9_temperature1 = 32.0f;
+inline float battery9_temperature2 = 31.7f;
+inline float battery9_total_voltage = 22.4f;
+inline float battery9_conv_rate = 0.93f;
 
-float battery10_SOC;
-float battery10_cell1;
-float battery10_cell2;
-float battery10_cell3;
-float battery10_cell4;
-float battery10_cell5;
-float battery10_cell6;
-float battery10_temperature1;
-float battery10_temperature2;
-float battery10_total_voltage;
-float battery10_conv_rate;
+inline float battery10_SOC = 80.0f;
+inline float battery10_cell1 = 3.72f;
+inline float battery10_cell2 = 3.83f;
+inline float battery10_cell3 = 3.77f;
+inline float battery10_cell4 = 3.74f;
+inline float battery10_cell5 = 3.78f;
+inline float battery10_cell6 = 3.76f;
+inline float battery10_temperature1 = 32.4f;
+inline float battery10_temperature2 = 32.0f;
+inline float battery10_total_voltage = 22.7f;
+inline float battery10_conv_rate = 0.97f;
 
-float battery11_SOC;
-float battery11_cell1;
-float battery11_cell2;
-float battery11_cell3;
-float battery11_cell4;
-float battery11_cell5;
-float battery11_cell6;
-float battery11_temperature1;
-float battery11_temperature2;
-float battery11_total_voltage;
-float battery11_conv_rate;
+inline float battery11_SOC = 76.8f;
+inline float battery11_cell1 = 3.68f;
+inline float battery11_cell2 = 3.79f;
+inline float battery11_cell3 = 3.73f;
+inline float battery11_cell4 = 3.71f;
+inline float battery11_cell5 = 3.75f;
+inline float battery11_cell6 = 3.74f;
+inline float battery11_temperature1 = 31.9f;
+inline float battery11_temperature2 = 31.6f;
+inline float battery11_total_voltage = 22.3f;
+inline float battery11_conv_rate = 0.93f;
 
-float battery12_SOC;
-float battery12_cell1;
-float battery12_cell2;
-float battery12_cell3;
-float battery12_cell4;
-float battery12_cell5;
-float battery12_cell6;
-float battery12_temperature1;
-float battery12_temperature2;
-float battery12_total_voltage;
-float battery12_conv_rate;
+inline float battery12_SOC = 79.2f;
+inline float battery12_cell1 = 3.71f;
+inline float battery12_cell2 = 3.82f;
+inline float battery12_cell3 = 3.76f;
+inline float battery12_cell4 = 3.73f;
+inline float battery12_cell5 = 3.77f;
+inline float battery12_cell6 = 3.75f;
+inline float battery12_temperature1 = 32.3f;
+inline float battery12_temperature2 = 31.9f;
+inline float battery12_total_voltage = 22.6f;
+inline float battery12_conv_rate = 0.96f;
 
-float battery13_SOC;
-float battery13_cell1;
-float battery13_cell2;
-float battery13_cell3;
-float battery13_cell4;
-float battery13_cell5;
-float battery13_cell6;
-float battery13_temperature1;
-float battery13_temperature2;
-float battery13_total_voltage;
-float battery13_conv_rate;
+inline float battery13_SOC = 78.1f;
+inline float battery13_cell1 = 3.69f;
+inline float battery13_cell2 = 3.81f;
+inline float battery13_cell3 = 3.74f;
+inline float battery13_cell4 = 3.72f;
+inline float battery13_cell5 = 3.76f;
+inline float battery13_cell6 = 3.77f;
+inline float battery13_temperature1 = 32.0f;
+inline float battery13_temperature2 = 31.7f;
+inline float battery13_total_voltage = 22.4f;
+inline float battery13_conv_rate = 0.94f;
 
-float battery14_SOC;
-float battery14_cell1;
-float battery14_cell2;
-float battery14_cell3;
-float battery14_cell4;
-float battery14_cell5;
-float battery14_cell6;
-float battery14_temperature1;
-float battery14_temperature2;
-float battery14_total_voltage;
-float battery14_conv_rate;
+inline float battery14_SOC = 77.5f;
+inline float battery14_cell1 = 3.70f;
+inline float battery14_cell2 = 3.82f;
+inline float battery14_cell3 = 3.75f;
+inline float battery14_cell4 = 3.73f;
+inline float battery14_cell5 = 3.76f;
+inline float battery14_cell6 = 3.74f;
+inline float battery14_temperature1 = 32.1f;
+inline float battery14_temperature2 = 31.8f;
+inline float battery14_total_voltage = 22.5f;
+inline float battery14_conv_rate = 0.95f;
 
-float battery15_SOC;
-float battery15_cell1;
-float battery15_cell2;
-float battery15_cell3;
-float battery15_cell4;
-float battery15_cell5;
-float battery15_cell6;
-float battery15_temperature1;
-float battery15_temperature2;
-float battery15_total_voltage;
-float battery15_conv_rate;
+inline float battery15_SOC = 79.0f;
+inline float battery15_cell1 = 3.71f;
+inline float battery15_cell2 = 3.82f;
+inline float battery15_cell3 = 3.76f;
+inline float battery15_cell4 = 3.73f;
+inline float battery15_cell5 = 3.77f;
+inline float battery15_cell6 = 3.75f;
+inline float battery15_temperature1 = 32.2f;
+inline float battery15_temperature2 = 31.9f;
+inline float battery15_total_voltage = 22.6f;
+inline float battery15_conv_rate = 0.95f;
 
-float battery16_SOC;
-float battery16_cell1;
-float battery16_cell2;
-float battery16_cell3;
-float battery16_cell4;
-float battery16_cell5;
-float battery16_cell6;
-float battery16_temperature1;
-float battery16_temperature2;
-float battery16_total_voltage;
-float battery16_conv_rate;
+inline float battery16_SOC = 78.5f;
+inline float battery16_cell1 = 3.70f;
+inline float battery16_cell2 = 3.81f;
+inline float battery16_cell3 = 3.75f;
+inline float battery16_cell4 = 3.73f;
+inline float battery16_cell5 = 3.76f;
+inline float battery16_cell6 = 3.74f;
+inline float battery16_temperature1 = 32.1f;
+inline float battery16_temperature2 = 31.8f;
+inline float battery16_total_voltage = 22.5f;
+inline float battery16_conv_rate = 0.94f;
 
-float battery17_SOC;
-float battery17_cell1;
-float battery17_cell2;
-float battery17_cell3;
-float battery17_cell4;
-float battery17_cell5;
-float battery17_cell6;
-float battery17_temperature1;
-float battery17_temperature2;
-float battery17_total_voltage;
-float battery17_conv_rate;
+inline float battery17_SOC = 77.9f;
+inline float battery17_cell1 = 3.69f;
+inline float battery17_cell2 = 3.80f;
+inline float battery17_cell3 = 3.74f;
+inline float battery17_cell4 = 3.71f;
+inline float battery17_cell5 = 3.75f;
+inline float battery17_cell6 = 3.73f;
+inline float battery17_temperature1 = 32.0f;
+inline float battery17_temperature2 = 31.7f;
+inline float battery17_total_voltage = 22.4f;
+inline float battery17_conv_rate = 0.93f;
 
-float battery18_SOC;
-float battery18_cell1;
-float battery18_cell2;
-float battery18_cell3;
-float battery18_cell4;
-float battery18_cell5;
-float battery18_cell6;
-float battery18_temperature1;
-float battery18_temperature2;
-float battery18_total_voltage;
-float battery18_conv_rate;
+inline float battery18_SOC = 80.0f;
+inline float battery18_cell1 = 3.72f;
+inline float battery18_cell2 = 3.83f;
+inline float battery18_cell3 = 3.77f;
+inline float battery18_cell4 = 3.74f;
+inline float battery18_cell5 = 3.78f;
+inline float battery18_cell6 = 3.76f;
+inline float battery18_temperature1 = 32.4f;
+inline float battery18_temperature2 = 32.0f;
+inline float battery18_total_voltage = 22.7f;
+inline float battery18_conv_rate = 0.97f;
 
-float batteries_voltage_reading;
-float voltage_reading;
-float current_reading;
+inline float batteries_voltage_reading = 400.0f;
+inline float voltage_reading = 12.3f;
+inline float current_reading = 5.6f;
 
-GeneralStateMachineStatus general_state_machine_status;
-OperationalStateMachineStatus operational_state_machine_status;
+inline GeneralStateMachineStatus general_state_machine_status = GeneralStateMachineStatus::CONNECTING;
+inline OperationalStateMachineStatus operational_state_machine_status = OperationalStateMachineStatus::HV_OPEN;
 
-int32_t driver_reading_period;
+inline int32_t driver_reading_period = 100;
 
-ImdStatus imd_status;
-float imd_resistance;
-bool imd_is_ok;
+inline ImdStatus imd_status = ImdStatus::NORMAL;
+inline float imd_resistance = 120.0f;
+inline bool imd_is_ok = true;
 
-SdcStatus sdc_status;
+inline SdcStatus sdc_status = SdcStatus::ENGAGED;
 
-float minimum_soc;
+inline float minimum_soc = 20.0f;
 
-BmsStatus bms_status;
+inline BmsStatus bms_status = BmsStatus::OK;
 
-float voltage_min;
-float voltage_max;
-float temp_min;
-float temp_max;
-}
+inline float voltage_min = 3.5f;
+inline float voltage_max = 4.2f;
+inline float temp_min = 25.0f;
+inline float temp_max = 35.0f;
+
+} // namespace var
 namespace Communication_Data
 {
     constexpr int battery_1 = 910;
