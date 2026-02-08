@@ -29,9 +29,6 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
 
-/* DMA IRQ dispatch table (defined here to satisfy references when DMA is unused) */
-DMA_HandleTypeDef *dma_irq_table[16] = {0};
-
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -78,7 +75,6 @@ extern DMA_HandleTypeDef hdma_spi3_rx;
 extern DMA_HandleTypeDef hdma_spi3_tx;
 extern SPI_HandleTypeDef hspi3;
 extern FDCAN_HandleTypeDef hfdcan1;
-extern DMA_HandleTypeDef *dma_irq_table[16];
 /*
 Externs for calltrace
 */ 
@@ -450,11 +446,7 @@ void DMA1_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
 
   /* USER CODE END DMA1_Stream0_IRQn 0 */
-  if (dma_irq_table[0] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[0]);
-  } else if (hdma_adc1.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_adc1);
-  }
+  HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
 
   /* USER CODE END DMA1_Stream0_IRQn 1 */
@@ -468,11 +460,7 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
 
   /* USER CODE END DMA1_Stream1_IRQn 0 */
-  if (dma_irq_table[1] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[1]);
-  } else if (hdma_adc2.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_adc2);
-  }
+  HAL_DMA_IRQHandler(&hdma_adc2);
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
   /* USER CODE END DMA1_Stream1_IRQn 1 */
@@ -486,11 +474,7 @@ void DMA1_Stream2_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
 
   /* USER CODE END DMA1_Stream2_IRQn 0 */
-  if (dma_irq_table[2] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[2]);
-  } else if (hdma_adc3.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_adc3);
-  }
+  HAL_DMA_IRQHandler(&hdma_adc3);
   /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
 
   /* USER CODE END DMA1_Stream2_IRQn 1 */
@@ -504,11 +488,7 @@ void DMA1_Stream3_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
 
   /* USER CODE END DMA1_Stream3_IRQn 0 */
-  if (dma_irq_table[3] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[3]);
-  } else if (hdma_i2c2_rx.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_i2c2_rx);
-  }
+  HAL_DMA_IRQHandler(&hdma_i2c2_rx);
   /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
 
   /* USER CODE END DMA1_Stream3_IRQn 1 */
@@ -522,11 +502,7 @@ void DMA1_Stream4_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
 
   /* USER CODE END DMA1_Stream4_IRQn 0 */
-  if (dma_irq_table[4] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[4]);
-  } else if (hdma_i2c2_tx.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_i2c2_tx);
-  }
+  HAL_DMA_IRQHandler(&hdma_i2c2_tx);
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
 
   /* USER CODE END DMA1_Stream4_IRQn 1 */
@@ -540,11 +516,7 @@ void DMA1_Stream5_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
 
   /* USER CODE END DMA1_Stream5_IRQn 0 */
-  if (dma_irq_table[5] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[5]);
-  } else if (hdma_spi3_rx.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_spi3_rx);
-  }
+  HAL_DMA_IRQHandler(&hdma_spi3_rx);
   /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
 
   /* USER CODE END DMA1_Stream5_IRQn 1 */
@@ -558,11 +530,7 @@ void DMA1_Stream6_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
-  if (dma_irq_table[6] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[6]);
-  } else if (hdma_spi3_tx.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_spi3_tx);
-  }
+  HAL_DMA_IRQHandler(&hdma_spi3_tx);
   /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
 
   /* USER CODE END DMA1_Stream6_IRQn 1 */
@@ -572,29 +540,17 @@ void DMA1_Stream6_IRQHandler(void)
   */
 void DMA2_Stream0_IRQHandler(void)
 {
-  if (dma_irq_table[8] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[8]);
-  } else if (hdma_fmac_preload.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_fmac_preload);
-  }
+  HAL_DMA_IRQHandler(&hdma_fmac_preload);
 }
 
 void DMA2_Stream1_IRQHandler(void)
 {
-  if (dma_irq_table[9] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[9]);
-  } else if (hdma_fmac_write.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_fmac_write);
-  }
+  HAL_DMA_IRQHandler(&hdma_fmac_write);
 }
 
 void DMA2_Stream2_IRQHandler(void)
 {
-  if (dma_irq_table[10] != NULL) {
-    HAL_DMA_IRQHandler(dma_irq_table[10]);
-  } else if (hdma_fmac_read.Instance != NULL) {
-    HAL_DMA_IRQHandler(&hdma_fmac_read);
-  }
+  HAL_DMA_IRQHandler(&hdma_fmac_read);
 }
 
 void FMAC_IRQHandler(void)
