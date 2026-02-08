@@ -7,6 +7,8 @@ constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PB0);
 
 using MainBoard = ST_LIB::Board<led>;
 
+#if !defined(EXAMPLE_ADC) && !defined(EXAMPLE_ETHERNET) &&                       \
+    !defined(EXAMPLE_MPU) && !defined(EXAMPLE_HARDFAULT)
 int main(void) {
   MainBoard::init();
 
@@ -17,6 +19,7 @@ int main(void) {
     HAL_Delay(200);
   }
 }
+#endif
 
 extern "C" void Error_Handler(void) {
   ErrorHandler("HAL error handler triggered");

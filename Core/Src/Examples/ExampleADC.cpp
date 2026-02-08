@@ -8,7 +8,7 @@ using namespace ST_LIB;
 #ifdef TEST_0
 
 constinit float adc_value = 0.0f;
-constexpr auto adc = ADCDomain::ADC(PA0, adc_value, ADCDomain::Resolution::BITS_12,
+constexpr auto adc = ADCDomain::ADC(ST_LIB::PA0, adc_value, ADCDomain::Resolution::BITS_12,
                                     ADCDomain::SampleTime::CYCLES_8_5);
 
 int main(void) {
