@@ -211,6 +211,7 @@ map<Pin, InputCapture::Instance> InputCapture::available_instances = {
 /************************************************
  *					   ADC
  ***********************************************/
+#if 0 // Legacy ADC (replaced by NewADC). Kept here only as reference.
 #if defined(HAL_ADC_MODULE_ENABLED) && defined(HAL_LPTIM_MODULE_ENABLED)
 
 LowPowerTimer lptim1(*LPTIM1, hlptim1, LPTIM1_PERIOD, "LPTIM 1");
@@ -264,6 +265,7 @@ uint32_t ADC::ranks[16] = {
     ADC_REGULAR_RANK_13, ADC_REGULAR_RANK_14, ADC_REGULAR_RANK_15,
     ADC_REGULAR_RANK_16};
 
+#endif
 #endif
 
 /************************************************
