@@ -113,7 +113,7 @@ int main(void) {
   // Comms
   OrderPackets::characterize_init(real_value);
   DataPackets::characterization_init(slope, offset);
-  DataPackets::value_init(raw_value, value);
+  DataPackets::Value_init(raw_value, value);
   DataPackets::start();
 
   // Instances
