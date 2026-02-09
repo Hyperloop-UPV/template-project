@@ -41,6 +41,11 @@ using namespace ST_LIB;
 double slope{1.0};
 double offset{0.0};
 
+double raw_value{0.0};
+double value{0.0};
+
+double real_value{0.0};
+
 constinit float sensor_value{0.0f};
 constexpr auto sensor =
     ADCDomain::ADC(ST_LIB::PA0, sensor_value, ADCDomain::Resolution::BITS_12,
@@ -106,8 +111,9 @@ int main(void) {
   ExampleEthernetBoard::init();
 
   // Comms
-  OrderPackets::characterize_init();
+  OrderPackets::characterize_init(real_value);
   DataPackets::characterization_init(slope, offset);
+  DataPackets::value_init(raw_value, value);
   DataPackets::start();
 
   // Instances
@@ -117,13 +123,14 @@ int main(void) {
   while (1) {
     eth_instance.update();
 
+    const float raw = sensor_instance.get_raw();
+    raw_value = static_cast<double>(raw);
+    value = static_cast<double>(sensor_instance.get_value_from_raw(raw));
+    sensor_value = static_cast<float>(value);
+
     if (OrderPackets::characterize_flag) {
       OrderPackets::characterize_flag = false;
-      const float raw = sensor_instance.get_raw();
-      const double read =
-          static_cast<double>(sensor_instance.get_value_from_raw(raw));
-      sensor_value = static_cast<float>(read);
-      characterize(raw, read);
+      characterize(raw, real_value);
       DataPackets::packets_socket->send_packet(*DataPackets::characterization);
     }
   }
