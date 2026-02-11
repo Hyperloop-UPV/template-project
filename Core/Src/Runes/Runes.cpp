@@ -45,21 +45,25 @@ FMAC_HandleTypeDef hfmac;
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
-FDCAN::Instance FDCAN::instance1 = {.TX = PD1,
-                                    .RX = PD0,
-                                    .hfdcan = &hfdcan1,
-                                    .instance = FDCAN1,
-                                    .dlc = DLC::BYTES_64,
-                                    .rx_location = FDCAN_RX_FIFO0,
-                                    .fdcan_number = 1};
+FDCAN::Instance FDCAN::instance1 = {
+    .TX = PD1,
+    .RX = PD0,
+    .hfdcan = &hfdcan1,
+    .instance = FDCAN1,
+    .dlc = DLC::BYTES_64,
+    .rx_location = FDCAN_RX_FIFO0,
+    .fdcan_number = 1
+};
 
 FDCAN::Peripheral FDCAN::fdcan1 = FDCAN::Peripheral::peripheral1;
 
 unordered_map<FDCAN::Peripheral, FDCAN::Instance*> FDCAN::available_fdcans = {
-    {FDCAN::fdcan1, &FDCAN::instance1}};
+    {FDCAN::fdcan1, &FDCAN::instance1}
+};
 
 unordered_map<FDCAN_HandleTypeDef*, FDCAN::Instance*> FDCAN::handle_to_fdcan = {
-    {FDCAN::instance1.hfdcan, &FDCAN::instance1}};
+    {FDCAN::instance1.hfdcan, &FDCAN::instance1}
+};
 
 #endif
 
@@ -79,12 +83,12 @@ SPI::Instance SPI::instance3 = {
     .hdma_rx = DMA::Stream::DMA1Stream6,
     .baud_rate_prescaler = SPI_BAUDRATEPRESCALER_256,
     .mode = SPI_MODE_MASTER,
-    .use_DMA = false};
+    .use_DMA = false
+};
 
 SPI::Peripheral SPI::spi3 = SPI::Peripheral::peripheral3;
 
-unordered_map<SPI::Peripheral, SPI::Instance*> SPI::available_spi = {
-    {SPI::spi3, &SPI::instance3}};
+unordered_map<SPI::Peripheral, SPI::Instance*> SPI::available_spi = {{SPI::spi3, &SPI::instance3}};
 #endif
 /************************************************
  *              Communication-UART
@@ -129,8 +133,7 @@ bool UART::printf_ready = false;
 
 TimerPeripheral encoder_timer(&htim8, {BASE, 0, 65535}, "TIM 8");
 
-map<pair<Pin, Pin>, TimerPeripheral*> Encoder::pin_timer_map = {
-    {{PC6, PC7}, &encoder_timer}};
+map<pair<Pin, Pin>, TimerPeripheral*> Encoder::pin_timer_map = {{{PC6, PC7}, &encoder_timer}};
 
 #endif
 /************************************************
@@ -155,9 +158,8 @@ TimerPeripheral timer17(&htim17, {BASE}, "TIM 17");
 TimerPeripheral timer15(&htim15, {ADVANCED}, "TIM 15");
 TimerPeripheral timer23(&htim23, {BASE, 275, UINT32_MAX - 1}, "TIM 23");
 
-vector<reference_wrapper<TimerPeripheral>> TimerPeripheral::timers = {
-    timer1,  timer2,  timer3,  timer4, timer12,
-    timer15, timer16, timer17, timer23};
+vector<reference_wrapper<TimerPeripheral>> TimerPeripheral::timers =
+    {timer1, timer2, timer3, timer4, timer12, timer15, timer16, timer17, timer23};
 
 #endif
 
@@ -204,7 +206,8 @@ DualPWMmap TimerPeripheral::available_dual_pwms = {
 #ifdef HAL_TIM_MODULE_ENABLED
 
 map<Pin, InputCapture::Instance> InputCapture::available_instances = {
-    {PF0, InputCapture::Instance(PF0, &timer23, TIM_CHANNEL_1, TIM_CHANNEL_2)}};
+    {PF0, InputCapture::Instance(PF0, &timer23, TIM_CHANNEL_1, TIM_CHANNEL_2)}
+};
 
 #endif
 
@@ -222,17 +225,36 @@ vector<uint32_t> channels1 = {};
 vector<uint32_t> channels2 = {};
 vector<uint32_t> channels3 = {};
 
-ADC::InitData init_data1(ADC1, ADC_RESOLUTION_16B, ADC_EXTERNALTRIG_LPTIM1_OUT,
-                         channels1, DMA::Stream::DMA1Stream0, "ADC 1");
-ADC::InitData init_data2(ADC2, ADC_RESOLUTION_16B, ADC_EXTERNALTRIG_LPTIM2_OUT,
-                         channels2, DMA::Stream::DMA1Stream1, "ADC 2");
-ADC::InitData init_data3(ADC3, ADC_RESOLUTION_12B, ADC_EXTERNALTRIG_LPTIM3_OUT,
-                         channels3, DMA::Stream::DMA1Stream2, "ADC 3");
+ADC::InitData init_data1(
+    ADC1,
+    ADC_RESOLUTION_16B,
+    ADC_EXTERNALTRIG_LPTIM1_OUT,
+    channels1,
+    DMA::Stream::DMA1Stream0,
+    "ADC 1"
+);
+ADC::InitData init_data2(
+    ADC2,
+    ADC_RESOLUTION_16B,
+    ADC_EXTERNALTRIG_LPTIM2_OUT,
+    channels2,
+    DMA::Stream::DMA1Stream1,
+    "ADC 2"
+);
+ADC::InitData init_data3(
+    ADC3,
+    ADC_RESOLUTION_12B,
+    ADC_EXTERNALTRIG_LPTIM3_OUT,
+    channels3,
+    DMA::Stream::DMA1Stream2,
+    "ADC 3"
+);
 
 ADC::Peripheral ADC::peripherals[3] = {
     ADC::Peripheral(&hadc1, lptim1, init_data1),
     ADC::Peripheral(&hadc2, lptim2, init_data2),
-    ADC::Peripheral(&hadc3, lptim3, init_data3)};
+    ADC::Peripheral(&hadc3, lptim3, init_data3)
+};
 
 map<Pin, ADC::Instance> ADC::available_instances = {
     {PF11, Instance(&peripherals[0], ADC_CHANNEL_2)},
@@ -255,15 +277,27 @@ map<Pin, ADC::Instance> ADC::available_instances = {
     {PA5, Instance(&peripherals[0], ADC_CHANNEL_19)},
     {PA6, Instance(&peripherals[0], ADC_CHANNEL_3)},
     {PB0, Instance(&peripherals[0], ADC_CHANNEL_9)},
-    {PB1, Instance(&peripherals[0], ADC_CHANNEL_5)}};
+    {PB1, Instance(&peripherals[0], ADC_CHANNEL_5)}
+};
 
 uint32_t ADC::ranks[16] = {
-    ADC_REGULAR_RANK_1,  ADC_REGULAR_RANK_2,  ADC_REGULAR_RANK_3,
-    ADC_REGULAR_RANK_4,  ADC_REGULAR_RANK_5,  ADC_REGULAR_RANK_6,
-    ADC_REGULAR_RANK_7,  ADC_REGULAR_RANK_8,  ADC_REGULAR_RANK_9,
-    ADC_REGULAR_RANK_10, ADC_REGULAR_RANK_11, ADC_REGULAR_RANK_12,
-    ADC_REGULAR_RANK_13, ADC_REGULAR_RANK_14, ADC_REGULAR_RANK_15,
-    ADC_REGULAR_RANK_16};
+    ADC_REGULAR_RANK_1,
+    ADC_REGULAR_RANK_2,
+    ADC_REGULAR_RANK_3,
+    ADC_REGULAR_RANK_4,
+    ADC_REGULAR_RANK_5,
+    ADC_REGULAR_RANK_6,
+    ADC_REGULAR_RANK_7,
+    ADC_REGULAR_RANK_8,
+    ADC_REGULAR_RANK_9,
+    ADC_REGULAR_RANK_10,
+    ADC_REGULAR_RANK_11,
+    ADC_REGULAR_RANK_12,
+    ADC_REGULAR_RANK_13,
+    ADC_REGULAR_RANK_14,
+    ADC_REGULAR_RANK_15,
+    ADC_REGULAR_RANK_16
+};
 
 #endif
 #endif
@@ -274,7 +308,9 @@ uint32_t ADC::ranks[16] = {
 #ifdef HAL_EXTI_MODULE_ENABLED
 
 map<uint16_t, ExternalInterrupt::Instance> ExternalInterrupt::instances = {
-    {PE0.gpio_pin, Instance(EXTI0_IRQn)}, {PE1.gpio_pin, Instance(EXTI1_IRQn)}};
+    {PE0.gpio_pin, Instance(EXTI0_IRQn)},
+    {PE1.gpio_pin, Instance(EXTI1_IRQn)}
+};
 
 #endif
 
@@ -284,17 +320,17 @@ map<uint16_t, ExternalInterrupt::Instance> ExternalInterrupt::instances = {
 
 #ifdef HAL_I2C_MODULE_ENABLED
 extern I2C_HandleTypeDef hi2c2;
-I2C::Instance I2C::instance2 = {.SCL = PF1,
-                                .SDA = PB11,
-                                .hi2c = &hi2c2,
-                                .instance = I2C2,
-                                .RX_DMA = DMA::Stream::DMA1Stream3,
-                                .TX_DMA = DMA::Stream::DMA1Stream4};
+I2C::Instance I2C::instance2 = {
+    .SCL = PF1,
+    .SDA = PB11,
+    .hi2c = &hi2c2,
+    .instance = I2C2,
+    .RX_DMA = DMA::Stream::DMA1Stream3,
+    .TX_DMA = DMA::Stream::DMA1Stream4
+};
 I2C::Peripheral I2C::i2c2 = I2C::Peripheral::peripheral2;
-unordered_map<I2C::Peripheral, I2C::Instance*> I2C::available_i2cs = {
-    {I2C::i2c2, &I2C::instance2}};
-unordered_map<uint32_t, uint32_t> I2C::available_speed_frequencies = {
-    {100, 0x60404E72}};
+unordered_map<I2C::Peripheral, I2C::Instance*> I2C::available_i2cs = {{I2C::i2c2, &I2C::instance2}};
+unordered_map<uint32_t, uint32_t> I2C::available_speed_frequencies = {{100, 0x60404E72}};
 #endif
 
 /************************************************
