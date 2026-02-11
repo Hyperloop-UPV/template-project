@@ -1,4 +1,4 @@
-// #ifdef LINEAR_SENSOR_CHARACTERIZATION
+#ifdef EXAMPLE_LINEAR_SENSOR_CHARACTERIZATION
 
 #include "ST-LIB.hpp"
 #include "main.h"
@@ -45,4 +45,4 @@ int main(void) {
   }
 }
 
-// #endif // LINEAR_SENSOR_CHARACTERIZATION
+#endif // EXAMPLE_LINEAR_SENSOR_CHARACTERIZATION
