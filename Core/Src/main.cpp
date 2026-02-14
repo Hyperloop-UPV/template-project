@@ -8,7 +8,7 @@ constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PF13);
 
 using MainBoard = ST_LIB::Board<led>;
 
-#if !defined(EXAMPLE_ADC) && !defined(EXAMPLE_ETHERNET) && !defined(EXAMPLE_MPU) && \
+#if !defined(EXAMPLE_ADC) && !defined(EXAMPLE_ETHERNET) && !defined(EXAMPLE_MPU) &&                \
     !defined(EXAMPLE_HARDFAULT)
 int main(void) {
     MainBoard::init();

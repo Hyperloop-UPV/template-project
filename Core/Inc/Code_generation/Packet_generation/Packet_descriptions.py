@@ -1,4 +1,4 @@
-import re 
+import re
 import json
 
 class BoardDescription:
@@ -13,7 +13,7 @@ class BoardDescription:
                 self.sockets=self.SocketsDescription(socks,self.ip)
         except Exception as e:
             raise Exception(f"Error in file {JSONpath}/boards/{name}/sockets.json: {e}")
-        #Packets: 
+        #Packets:
         self.sending_packets = []
         self.data_size =0
         self.order_size =0
@@ -40,15 +40,15 @@ class BoardDescription:
                 aux_sending= PacketDescription.check_for_sending(packet)
                 if aux_sending is not None:
                     self.sending_packets.append(aux_sending)
-                    
+
                 if self.packets[packets_name][i].type != "order":
                     self.data_size += 1
                 else:
                     self.order_size += 1
                 i += 1
-            
+
         self.sending_packets = self.fix_sendind_packets(self.sending_packets)
-        
+
     @staticmethod
     def fix_sendind_packets(sending_packets:list):
         fixed_packets = []
@@ -72,9 +72,9 @@ class BoardDescription:
             fixed_packets.append(entry)
 
         return fixed_packets
-                
-                
-                
+
+
+
     class SocketsDescription:
         def __init__(self,sockets:list,board_ip:str):
             self.allSockets=[]
@@ -86,16 +86,16 @@ class BoardDescription:
                 name = sock["name"].replace(" ", "_").replace("-", "_")
                 sock_type = sock["type"]
                 self.allSockets.append({"name": name,"type":sock_type})
-                
+
                 if sock_type == "ServerSocket":
                     self.ServerSockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "port": sock["port"]})
                 elif sock_type == "Socket":
                     self.Sockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "local_port": sock["local_port"], "remote_ip": sock["remote_ip"], "remote_port": sock["remote_port"]})
                 elif sock_type == "DatagramSocket":
                     self.DatagramSockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "port": sock["port"],"remote_ip":sock["remote_ip"]})
-            
 
-        
+
+
 class PacketDescription:
     def __init__(self, packet:dict,measurements:list, filename:str="Unknown"):
         self.id =packet["id"]
@@ -108,13 +108,13 @@ class PacketDescription:
         for variable in packet["variables"]:
             self.variables.append(variable)
             self.measurements.append(MeasurmentsDescription(measurements,variable, filename))
-            
+
     @staticmethod
     def check_for_sending(packet:dict):
         if "period" in packet and "period_type" in packet and "socket" in packet:
             name = packet["name"].replace(" ", "_").replace("-", "_")
             return {"name": name,"period": packet["period"],"period_type":packet["period_type"],"socket": packet["socket"]}
-        
+
         elif "period_ms" in packet and "socket" in packet:
             name = packet["name"].replace(" ", "_").replace("-", "_")
             return {"name": name,"period": packet["period_ms"],"period_type":"ms","socket": packet["socket"]}
@@ -126,11 +126,11 @@ class MeasurmentsDescription:
         if not hasattr(self.__class__, 'viewed_measurements'):
             self.__class__.viewed_measurements = {}
         measurement = self._MeasurementSearch(measurements,variable)
-        
+
         if measurement is None:
             print(f"Measurement not found for variable: {variable} in file: {filename}\n")
             raise Exception(f"Measurement not found for variable: {variable} in file: {filename}")
-        
+
         self.name = measurement["name"]
         self.type = (self._unsigned_int_correction(measurement["type"]).replace(" ", "_").replace("-", "_"))
         if self.type == "enum":
@@ -145,8 +145,8 @@ class MeasurmentsDescription:
         for i in range(len(values)):
             values[i] = values[i].replace(" ", "_").replace("-", "_")
         return values
-                
-                
+
+
     @staticmethod
     def _MeasurementSearch(measurements:list, variable:str):
         if variable in MeasurmentsDescription.viewed_measurements:
@@ -157,8 +157,8 @@ class MeasurmentsDescription:
                     MeasurmentsDescription.viewed_measurements[variable] = measurment
                     return measurment
         return None
-    
-    
+
+
     @staticmethod
     def _unsigned_int_correction(type:str):
         aux_type = type[:4]

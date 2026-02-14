@@ -28,9 +28,9 @@ Copyright (c) 2021 STMicroelectronics.
     <fpuPresent>true</fpuPresent>
     <nvicPrioBits>4</nvicPrioBits>
     <vendorSystickConfig>false</vendorSystickConfig>
-  </cpu>  
-  <addressUnitBits>8</addressUnitBits> 
-  <width>32</width> 
+  </cpu>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
   <size>0x20</size>
   <resetValue>0x0</resetValue>
   <resetMask>0xFFFFFFFF</resetMask>
@@ -4340,8 +4340,8 @@ Note: The software is allowed to write these bits only when ADEN=1, ADSTART=0 an
     </peripheral>
 	<peripheral derivedFrom="ADC1">
       <name>ADC2</name>
-      <baseAddress>0x40022100</baseAddress>    
-    </peripheral>	
+      <baseAddress>0x40022100</baseAddress>
+    </peripheral>
 	<peripheral>
       <name>ADC12_Common</name>
       <description>Analog-to-Digital Converter</description>
@@ -4626,9 +4626,9 @@ Note: The software is allowed to write these bits only when ADEN=1, ADSTART=0 an
             </field>
           </fields>
         </register>
-      </registers>    
-    </peripheral>	
-	<peripheral> 
+      </registers>
+    </peripheral>
+	<peripheral>
         <name>ADC3</name>
         <description>Analog-to-Digital Converter</description>
 		<groupName>ADC</groupName>
@@ -8435,10 +8435,10 @@ Note: The software is allowed to write these bits only when ADEN = 1, ADSTART = 
                 <access>read-write</access>
               </field>
             </fields>
-          </register>		  		           
+          </register>
         </registers>
     </peripheral>
-    <peripheral> 
+    <peripheral>
         <name>ADC3_Common</name>
         <description>Analog-to-Digital Converter</description>
 		<groupName>ADC</groupName>
@@ -11592,7 +11592,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
           </fields>
         </register>
       </registers>
-    </peripheral>  
+    </peripheral>
     <peripheral>
       <name>DAC</name>
       <description>DAC</description>
@@ -12332,7 +12332,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>Allow D1 domain debug in Standby mode</description>
                      <bitOffset>2</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>                 
+                  </field>
 				  <field>
                      <name>DBGSLPD2</name>
                      <description> Allow D2 domain debug in Sleep mode</description>
@@ -12362,7 +12362,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>Allow debug in D3 Standby mode</description>
                      <bitOffset>8</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				
+                  </field>
 				  <field>
                      <name>TRACECLKEN</name>
                      <description>Trace port clock enable</description>
@@ -12386,7 +12386,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>External trigger output enable</description>
                      <bitOffset>28</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				  
+                  </field>
                </fields>
             </register>
             <register>
@@ -12403,9 +12403,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>WWDG1 stop in debug</description>
                      <bitOffset>6</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>                                                 
+                  </field>
                </fields>
-            </register>  
+            </register>
             <register>
                <name>APB3FZ2</name>
                <displayName>APB3FZ2</displayName>
@@ -12420,9 +12420,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>WWDG1 stop in debug</description>
                      <bitOffset>6</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>                                                     
+                  </field>
                </fields>
-            </register>			
+            </register>
 			<register>
                <name>APB1LFZ1</name>
                <displayName>APB1LFZ1</displayName>
@@ -12497,7 +12497,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>WWDG2 stop in debug</description>
                      <bitOffset>11</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				  
+                  </field>
 				  <field>
                      <name>DBG_I2C1</name>
                      <description> I2C1 SMBUS timeout stop in debug </description>
@@ -12515,9 +12515,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description> I2C3 SMBUS timeout stop in debug</description>
                      <bitOffset>23</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				   
+                  </field>
                </fields>
-            </register> 
+            </register>
             <register>
                <name>APB1LFZ2</name>
                <displayName>APB1LFZ2</displayName>
@@ -12610,9 +12610,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description> I2C3 SMBUS timeout stop in debug</description>
                      <bitOffset>23</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>                  
+                  </field>
                </fields>
-            </register>				
+            </register>
             <register>
                <name>APB2FZ1</name>
                <displayName>APB2FZ1</displayName>
@@ -12651,9 +12651,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description> TIM17 stop in debug</description>
                      <bitOffset>18</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				  
+                  </field>
                </fields>
-            </register>	
+            </register>
             <register>
                <name>APB2FZ2</name>
                <displayName>APB2FZ2</displayName>
@@ -12692,9 +12692,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description>TIM17 stop in debug</description>
                      <bitOffset>18</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				  
+                  </field>
                </fields>
-            </register>			
+            </register>
             <register>
                <name>APB4FZ1</name>
                <displayName>APB4FZ1</displayName>
@@ -12751,7 +12751,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description> Independent watchdog for D2 stop in debug</description>
                      <bitOffset>19</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>					  
+                  </field>
                </fields>
             </register>
             <register>
@@ -12810,9 +12810,9 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
                      <description> LS watchdog for D2 stop in debug</description>
                      <bitOffset>19</bitOffset>
                      <bitWidth>1</bitWidth>
-                  </field>				  
+                  </field>
                </fields>
-            </register>			
+            </register>
          </registers>
     </peripheral>
 	<peripheral>
@@ -13303,7 +13303,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
         </register>
       </registers>
     </peripheral>
-    <peripheral> 
+    <peripheral>
       <name>DELAY_Block_SDMMC1</name>
       <description>DELAY_Block_SDMMC1</description>
       <groupName>DLYB</groupName>
@@ -13826,7 +13826,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>     
+        </register>
 		<register>
           <name>CH2CFGR1</name>
           <displayName>CH2CFGR1</displayName>
@@ -14000,7 +14000,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>        
+        </register>
 		<register>
           <name>CH3CFGR1</name>
           <displayName>CH3CFGR1</displayName>
@@ -14174,7 +14174,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>        
+        </register>
 		<register>
           <name>CH4CFGR1</name>
           <displayName>CH4CFGR1</displayName>
@@ -14348,7 +14348,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>        
+        </register>
 		<register>
           <name>CH5CFGR1</name>
           <displayName>CH5CFGR1</displayName>
@@ -14522,7 +14522,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>            
+        </register>
 		<register>
           <name>CH6CFGR1</name>
           <displayName>CH6CFGR1</displayName>
@@ -14696,7 +14696,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register> 
+        </register>
         <register>
           <name>CH7CFGR1</name>
           <displayName>CH7CFGR1</displayName>
@@ -14870,7 +14870,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
               <bitWidth>6</bitWidth>
             </field>
           </fields>
-        </register>     
+        </register>
         <register>
           <name>DFSDM_FLT0CR1</name>
           <displayName>DFSDM_FLT0CR1</displayName>
@@ -23406,7 +23406,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
     <peripheral derivedFrom="DELAY_Block_SDMMC1">
       <name>Delay_Block_OCTOSPI1</name>
       <baseAddress>0x52006000</baseAddress>
-    </peripheral>	
+    </peripheral>
     <peripheral derivedFrom="DELAY_Block_SDMMC1">
       <name>Delay_Block_OCTOSPI2</name>
       <baseAddress>0x5200B000</baseAddress>
@@ -23461,7 +23461,7 @@ A read from this register resets the RRDY flag in the CORDIC_CSR register.</desc
         <name>EXTI15_10</name>
         <description>EXTI Line[15:10] interrupts</description>
         <value>40</value>
-      </interrupt>  
+      </interrupt>
       <interrupt>
         <name>WKUP</name>
         <description>WKUP1 to WKUP6 pins</description>
@@ -40618,7 +40618,7 @@ When a read access to this register occurs, the read data are the contents of th
     <peripheral derivedFrom="GPIOA">
       <name>GPIOH</name>
       <baseAddress>0x58021C00</baseAddress>
-    </peripheral>   
+    </peripheral>
     <peripheral derivedFrom="GPIOA">
       <name>GPIOJ</name>
       <baseAddress>0x58022400</baseAddress>
@@ -59503,7 +59503,7 @@ When a read access to this register occurs, the read data are the contents of th
           </fields>
         </register>
       </registers>
-    </peripheral>	
+    </peripheral>
     <peripheral>
       <name>MPU</name>
       <description>Memory protection unit</description>
@@ -61422,12 +61422,12 @@ When a read access to this register occurs, the read data are the contents of th
         <offset>0x0</offset>
         <size>0x1000</size>
         <usage>registers</usage>
-      </addressBlock> 
+      </addressBlock>
       <interrupt>
         <name>OCTOSPI1</name>
         <description>OCTOSPI1 global interrupt</description>
         <value>92</value>
-      </interrupt>	  
+      </interrupt>
       <registers>
         <register>
           <name>CR</name>
@@ -62337,7 +62337,7 @@ When a read access to this register occurs, the read data are the contents of th
       </registers>
     </peripheral>
 	<peripheral derivedFrom="OCTOSPI1">
-      <name>OCTOSPI2</name>    
+      <name>OCTOSPI2</name>
       <baseAddress>0x5200A000</baseAddress>
       <interrupt>
         <name>OCTOSPI2</name>
@@ -73654,7 +73654,7 @@ When a read access to this register occurs, the read data are the contents of th
           </fields>
         </register>
       </registers>
-    </peripheral>        
+    </peripheral>
     <peripheral derivedFrom="OTG1_HS_PWRCLK">
       <name>OTG2_HS_PWRCLK</name>
       <baseAddress>0x40080E00</baseAddress>
@@ -86289,7 +86289,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
         <name>SAI4</name>
         <description>SAI4 global interrupt</description>
         <value>146</value>
-      </interrupt>   
+      </interrupt>
     </peripheral>
     <peripheral>
       <name>SCB</name>
@@ -87006,7 +87006,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
         </register>
       </registers>
     </peripheral>
-    <peripheral> 
+    <peripheral>
       <name>SDMMC1</name>
       <description>SDMMC1</description>
       <groupName>SDMMC</groupName>
@@ -88417,7 +88417,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
     </peripheral>
 	<peripheral derivedFrom="SDMMC1">
       <name>SDMMC2</name>
-      <baseAddress>0x48022400</baseAddress>      
+      <baseAddress>0x48022400</baseAddress>
       <interrupt>
         <name>SDMMC2</name>
         <description>SDMMC2 global interrupt</description>
@@ -88816,7 +88816,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
               <bitWidth>13</bitWidth>
             </field>
           </fields>
-        </register>      
+        </register>
       </registers>
     </peripheral>
     <peripheral>
@@ -95890,7 +95890,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
           </fields>
         </register>
       </registers>
-    </peripheral> 
+    </peripheral>
     <peripheral derivedFrom="TIM2">
       <name>TIM23</name>
       <baseAddress>0x4000E000</baseAddress>
@@ -95908,7 +95908,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
         <description>TIM24 global interrupt</description>
         <value>162</value>
       </interrupt>
-    </peripheral>	
+    </peripheral>
     <peripheral>
       <name>USART1</name>
       <description>Universal synchronous asynchronous receiver
@@ -96972,7 +96972,7 @@ Writing this bit to 1 clears the OVR_RIS bit in PSSI_RIS.</description>
 	<peripheral derivedFrom="USART1">
       <name>UART9</name>
       <baseAddress>0x40011800</baseAddress>
-    </peripheral>	
+    </peripheral>
 	<peripheral derivedFrom="USART1">
       <name>USART10</name>
       <baseAddress>0x40011C00</baseAddress>
