@@ -71,7 +71,7 @@ def Get_data_context(board:BoardDescription):
         return Packets,totaldata
 
     packets,data = GenerateDataPackets(board)
-    
+
     def GenerateGroupedSendingPackets(board: BoardDescription):
         datagram_sockets = [s["name"] for s in board.sockets.DatagramSockets]
         grouped_lookup = {}
@@ -84,17 +84,17 @@ def Get_data_context(board:BoardDescription):
             period = packet["period"]
             period_type = packet["period_type"]
             names = packet["name"]
-            
+
             key = (period, period_type)
             if key not in grouped_lookup:
                 grouped_lookup[key] = []
-                
+
             if isinstance(names, list):
                 for name in names:
                     grouped_lookup[key].append({"socket": socket_name, "name": name})
             else:
                 grouped_lookup[key].append({"socket": socket_name, "name": names})
-        
+
         grouped_list = []
         for (period, period_type), items in grouped_lookup.items():
             grouped_list.append({
