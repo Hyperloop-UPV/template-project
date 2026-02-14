@@ -26,7 +26,7 @@ public:
     {%for packet in packets -%}
     inline static HeapPacket *{{packet.name}}_packet{nullptr};
     {% endfor %}
-    {% for socket in sockets -%}
+    {% for socket in DatagramSockets -%}
     inline static {{socket.type}} *{{socket.name}}{nullptr};
     {% endfor %}
         
@@ -38,26 +38,17 @@ public:
         }
         {% endfor %}
 
-        {% for socket in ServerSockets -%}
-        {{socket.name}} = new ServerSocket("{{socket.board_ip}}",{{socket.port}});
-        {%- endfor %}
         {% for socket in DatagramSockets -%}
         {{socket.name}} = new DatagramSocket("{{socket.board_ip}}",{{socket.port}},"{{socket.remote_ip}}",{{socket.port}});
         {% endfor %}
-        {% for socket in Sockets -%}
-        {{socket.name}} = new Socket("{{socket.board_ip}}",{{socket.local_port}},"{{socket.remote_ip}}",{{socket.remote_port}});
-        {% endfor %}
         
-        {%- for packet in sending_packets %}
-        Scheduler::register_task({% if packet.period_type == "ms" %}{{ (packet.period*1000)|round|int }}{% else %}{{ packet.period|round|int }}{% endif %}, +[](){
-            {% if packet.name is string -%}
+        {%- for group in sending_packets %}
+        Scheduler::register_task({% if group.period_type == "ms" %}{{ (group.period*1000)|round|int }}{% else %}{{ group.period|round|int }}{% endif %}, +[](){
+            {% for packet in group.packets -%}
             DataPackets::{{packet.socket}}->send_packet(*DataPackets::{{packet.name}}_packet);
-            {% else %}
-            {% for name in packet.name -%}
-            DataPackets::{{packet.socket}}->send_packet(*DataPackets::{{name}}_packet);
             {% endfor -%}
-            {%- endif %}
-        }); {%- endfor %}
+        });
+        {%- endfor %}
     }
 
 

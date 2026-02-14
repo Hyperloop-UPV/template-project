@@ -33,6 +33,29 @@ public:
     }
     {% endfor %}
 
+    {% for socket in Sockets -%}
+    inline static {{socket.type}} *{{socket.name}}{nullptr};
+    {% endfor %}
+    {% for socket in ServerSockets -%}
+    inline static {{socket.type}} *{{socket.name}}{nullptr};
+    {% endfor %}
+
+    static void start()
+    {
+        {% for packet in packets -%}
+        if ({{packet.name}}_order == nullptr) {
+            ErrorHandler("Order {{packet.name}} not initialized");
+        }
+        {% endfor %}
+
+        {% for socket in ServerSockets -%}
+        {{socket.name}} = new ServerSocket("{{socket.board_ip}}",{{socket.port}});
+        {%- endfor %}
+        {% for socket in Sockets -%}
+        {{socket.name}} = new Socket("{{socket.board_ip}}",{{socket.local_port}},"{{socket.remote_ip}}",{{socket.remote_port}});
+        {% endfor %}
+    }
+
 private:
     {% for packet in packets -%}
     static void {{packet.name}}_cb()

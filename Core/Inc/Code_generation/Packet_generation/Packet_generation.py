@@ -71,17 +71,49 @@ def Get_data_context(board:BoardDescription):
         return Packets,totaldata
     
     packets,data = GenerateDataPackets(board)
+    
+    def GenerateGroupedSendingPackets(board: BoardDescription):
+        datagram_sockets = [s["name"] for s in board.sockets.DatagramSockets]
+        grouped_lookup = {}
+
+        for packet in board.sending_packets:
+            socket_name = packet["socket"]
+            if socket_name not in datagram_sockets:
+                continue
+
+            period = packet["period"]
+            period_type = packet["period_type"]
+            names = packet["name"]
+            
+            key = (period, period_type)
+            if key not in grouped_lookup:
+                grouped_lookup[key] = []
+                
+            if isinstance(names, list):
+                for name in names:
+                    grouped_lookup[key].append({"socket": socket_name, "name": name})
+            else:
+                grouped_lookup[key].append({"socket": socket_name, "name": names})
+        
+        grouped_list = []
+        for (period, period_type), items in grouped_lookup.items():
+            grouped_list.append({
+                "period": period,
+                "period_type": period_type,
+                "packets": items
+            })
+        return grouped_list
+
     context = {
         "board": board.name,
         "enums": GenerateDataEnum(board),
         "packets" : packets,
         "data": data,
         "size": board.order_size,
-        "sockets":board.sockets.allSockets,
-        "ServerSockets":board.sockets.ServerSockets,
         "Sockets":board.sockets.Sockets,
         "DatagramSockets":board.sockets.DatagramSockets,
-        "sending_packets": board.sending_packets,
+        "DatagramSocketNames": [s["name"] for s in board.sockets.DatagramSockets],
+        "sending_packets": GenerateGroupedSendingPackets(board),
     }
     return context
 
@@ -154,6 +186,8 @@ def Get_order_context(board:BoardDescription):
         "packets" : packets,
         "data": data,
         "size": board.order_size,
+        "ServerSockets":board.sockets.ServerSockets,
+        "Sockets":board.sockets.Sockets,
     }
     return context
 
