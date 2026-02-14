@@ -101,6 +101,18 @@
             "externalConsole": false
         },
         {
+            "name": "Debug ST-LIB tests (simulator)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/simulator/deps/ST-LIB/Tests/st-lib-test",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "Tests: Build simulator"
+        },
+        {
             "type": "cortex-debug",
             "request": "launch",
             "name": "Build and Debug Project",

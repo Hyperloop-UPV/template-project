@@ -6,6 +6,9 @@
   "C_Cpp.clang_format_style": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 100}",
   "C_Cpp.clang_format_sortIncludes": true,
   "C_Cpp.intelliSenseCacheSize": 0,
+  "cmake.testExplorerIntegrationEnabled": true,
+  "cmake.defaultConfigurePreset": "simulator",
+  "cmake.defaultBuildPreset": "simulator",
   "files.associations": {
     "condition_variable": "cpp",
     "chrono": "cpp",
@@ -19,7 +22,6 @@
     "utility": "cpp",
     "variant": "cpp",
     "atomic": "cpp",
-<<<<<<< HEAD
     "string": "cpp",
     "string_view": "cpp",
     "ranges": "cpp",
@@ -28,13 +30,9 @@
     "initializer_list": "cpp",
     "stacktrace": "cpp",
     "regex": "cpp",
-    "valarray": "cpp"
-=======
-    "bitset": "cpp",
+    "valarray": "cpp",
     "cstdlib": "cpp",
     "mutex": "cpp",
-    "shared_mutex": "cpp",
-    "regex": "cpp"
->>>>>>> origin/main
+    "shared_mutex": "cpp"
   }
 }

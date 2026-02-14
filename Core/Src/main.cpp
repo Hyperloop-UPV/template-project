@@ -1,53 +1,29 @@
-#include "Examples/ExampleMPU.cpp"
-#include "Examples/ExamplesHardFault.cpp"
+#include "main.h"
 
 #include "ST-LIB.hpp"
-#include "main.h"
 
 using namespace ST_LIB;
 
-constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PB0);
+constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PF13);
 
-#ifdef STLIB_ETH
-#if defined(USE_PHY_LAN8742)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
-#elif defined(USE_PHY_LAN8700)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H10, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
-#elif defined(USE_PHY_KSZ8041)
-constexpr auto eth =
-    EthernetDomain::Ethernet(EthernetDomain::PINSET_H11, "00:80:e1:00:01:07",
-                             "192.168.1.7", "255.255.0.0");
-#else
-#error "No PHY selected for Ethernet pinset selection"
-#endif
+using MainBoard = ST_LIB::Board<led>;
 
-using myBoard = ST_LIB::Board<eth, led>;
-#else
-using myBoard = ST_LIB::Board<led>;
-#endif
-
+#if !defined(EXAMPLE_ADC) && !defined(EXAMPLE_ETHERNET) && !defined(EXAMPLE_MPU) &&                \
+    !defined(EXAMPLE_HARDFAULT)
 int main(void) {
-  Hard_fault_check();
+    MainBoard::init();
 
-  myBoard::init();
-#ifdef STLIB_ETH
-  auto eth_instance = &myBoard::instance_of<eth>();
-#endif
-  auto led_instance = &myBoard::instance_of<led>();
+    auto& led_instance = MainBoard::instance_of<led>();
 
-  led_instance->turn_on();
-  while (1) {
-#ifdef STLIB_ETH
-    eth_instance->update();
-#endif
-  }
+    while (1) {
+        led_instance.toggle();
+        HAL_Delay(200);
+    }
 }
-void Error_Handler(void) {
-  ErrorHandler("HAL error handler triggered");
-  while (1) {
-  }
+#endif
+
+extern "C" void Error_Handler(void) {
+    ErrorHandler("HAL error handler triggered");
+    while (1) {
+    }
 }
