@@ -24,3 +24,17 @@ To flash and debug, you should be outside the container, and use the [Cortex-Deb
 
 ## Notes
 If you are going to develop OUTSIDE the container, you MUST change `template-project.code-workspace` file after project creation if you DON'T have STLIB on ../ST-LIB relative path. This template is intended for you to develop always inside the container, so you should not be concerned about this.
+
+## Automatic formatting (commit/push)
+This repository uses `pre-commit` + `clang-format` to format C/C++ files automatically on `git commit` and `git push`.
+
+Install hooks once:
+```sh
+pip install pre-commit
+./tools/install-git-hooks.sh
+```
+
+Run manually on all files:
+```sh
+pre-commit run --all-files
+```
