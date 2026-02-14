@@ -2,42 +2,112 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Debug Server for Simulator on emulated arch",
+      "label": "SIM | Rosetta | Start Debug Server",
       "type": "shell",
       "command": "ROSETTA_DEBUGSERVER_PORT=1234 ./out/build/latest.elf",
       "problemMatcher": [],
       "isBackground": true
     },
     {
-      "label": "Tests: Configure simulator",
+      "label": "MCU | OpenOCD | Start Server",
+      "type": "shell",
+      "command": "openocd",
+      "args": [
+        "-f",
+        ".vscode/stlink.cfg",
+        "-f",
+        ".vscode/stm32h7x.cfg",
+        "-c",
+        "transport select swd",
+        "-c",
+        "gdb_port 3333",
+        "-c",
+        "tcl_port 6666",
+        "-c",
+        "telnet_port 4444"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": [
+          {
+            "regexp": ".*",
+            "message": 0
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Listening on port 3333 for gdb connections"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "MCU | OpenOCD | RTT Console",
+      "type": "shell",
+      "command": "nc 127.0.0.1 9090",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "MCU | ST-LINK | Start GDB Server",
+      "type": "shell",
+      "command": "ST-LINK_gdbserver",
+      "args": [
+        "-p",
+        "61234",
+        "-d",
+        "-e",
+        "--halt",
+        "--frequency",
+        "4000"
+      ],
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "SIM | Tests | Configure",
       "type": "shell",
       "command": "cmake --preset simulator",
       "problemMatcher": []
     },
     {
-      "label": "Tests: Build simulator",
+      "label": "SIM | Tests | Build",
       "type": "shell",
       "command": "cmake --build --preset simulator -j8",
       "dependsOn": [
-        "Tests: Configure simulator"
+        "SIM | Tests | Configure"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Tests: Run all (simulator)",
+      "label": "SIM | Tests | Run All",
       "type": "shell",
-      "command": "ctest --test-dir out/build/simulator/deps/ST-LIB --output-on-failure",
+      "command": "ctest --preset simulator-all",
       "dependsOn": [
-        "Tests: Build simulator"
+        "SIM | Tests | Build"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Tests: Run ADC (simulator)",
+      "label": "SIM | Tests | Run ADC",
       "type": "shell",
-      "command": "ctest --test-dir out/build/simulator/deps/ST-LIB -R ADCTest --output-on-failure",
+      "command": "ctest --preset simulator-adc",
       "dependsOn": [
-        "Tests: Build simulator"
+        "SIM | Tests | Build"
       ],
       "problemMatcher": []
     }

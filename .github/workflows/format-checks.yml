@@ -3,6 +3,7 @@ name: Format Checks
 on:
   workflow_dispatch:
   pull_request:
+    branches: [ main ]
     paths:
       - '**.cpp'
       - '**.hpp'
