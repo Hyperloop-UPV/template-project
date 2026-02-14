@@ -71,9 +71,6 @@ extern FMAC_HandleTypeDef hfmac;
 extern LPTIM_HandleTypeDef hlptim1;
 extern LPTIM_HandleTypeDef hlptim2;
 extern LPTIM_HandleTypeDef hlptim3;
-extern DMA_HandleTypeDef hdma_spi3_rx;
-extern DMA_HandleTypeDef hdma_spi3_tx;
-extern SPI_HandleTypeDef hspi3;
 extern FDCAN_HandleTypeDef hfdcan1;
 /*
 Externs for calltrace
@@ -151,7 +148,7 @@ void hardfault_flash_write(
         if (HAL_FLASH_Program(
                 FLASH_TYPEPROGRAM_FLASHWORD,
                 addr_hard_fault + offset,
-                (uint32_t*)block
+                (uintptr_t)block
             ) != HAL_OK) {
             __BKPT(0);
         }
@@ -167,7 +164,7 @@ void hardfault_flash_write(
         if (HAL_FLASH_Program(
                 FLASH_TYPEPROGRAM_FLASHWORD,
                 addr_metadata + offset,
-                (uint32_t*)block
+                (uintptr_t)block
             ) != HAL_OK) {
             __BKPT(0);
         }
