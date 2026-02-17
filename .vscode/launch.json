@@ -24,13 +24,13 @@
         "monitor reset halt"
       ],
       "postLaunchCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
       "postRestartCommands": [
         "monitor halt",
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
@@ -69,13 +69,13 @@
         "monitor reset halt"
       ],
       "postLaunchCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
       "postRestartCommands": [
         "monitor halt",
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
@@ -105,7 +105,7 @@
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
       "postAttachCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],

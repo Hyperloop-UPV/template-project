@@ -273,7 +273,22 @@ __attribute__((noreturn, optimize("O0"))) void my_fault_handler_c(sContextStateF
         &metadata_buffer,
         sizeof(metadata_buffer)
     );
-    // reboot the system
+    // In debug builds, stop here instead of forcing a reset loop.
+#ifndef NDEBUG
+    __BKPT(0);
+    while (1) {
+    }
+#else
+    // In debug sessions on release binaries, stop here as well.
+    volatile uint32_t* dhcsr = (volatile uint32_t*)0xE000EDF0;
+    if ((*dhcsr & 0x1U) != 0U) {
+        __BKPT(0);
+        while (1) {
+        }
+    }
+#endif
+
+    // Reboot the system in non-debug runs.
     volatile uint32_t* aircr = (volatile uint32_t*)0xE000ED0C;
     __asm volatile("dsb");
     *aircr = (0x05FA << 16) | 0x1 << 2;
@@ -407,7 +422,19 @@ void FDCAN3_IT0_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
  */
 void FDCAN3_IT1_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
 
+<<<<<<< refactor/EXTI
 void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
+=======
+/**
+ * @brief This function handles DMA1 stream0 global interrupt.
+ */
+
+void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
+
+/**
+ * @brief This function handles SPI3 global interrupt.
+ */
+>>>>>>> main
 
 /**
  * @brief This function handles Ethernet global interrupt.
