@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(template-project LANGUAGES ASM C CXX)
+include(CTest)
+enable_testing()
 
 set(EXECUTABLE ${PROJECT_NAME}.elf)
-set(Board "TEST") # User must change the Board name
+set(BOARD_NAME "TEST" CACHE STRING "Board key from Core/Inc/Code_generation/JSON_ADE/boards.json")
+if(BOARD_NAME STREQUAL "")
+  message(FATAL_ERROR "BOARD_NAME cannot be empty")
+endif()
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(LD_SCRIPT ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
 
@@ -15,6 +20,11 @@ if(CMAKE_HOST_WIN32)
   set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/Scripts/python)
 else()
   set(VENV_PYTHON ${CMAKE_SOURCE_DIR}/virtual/bin/python)
+endif()
+if(EXISTS "${VENV_PYTHON}")
+  set(PYTHON_FOR_TOOLS "${VENV_PYTHON}")
+else()
+  set(PYTHON_FOR_TOOLS "${Python3_EXECUTABLE}")
 endif()
 
 option(USE_ETHERNET "Enable ethernet peripheral" OFF)
@@ -39,28 +49,16 @@ if(USE_CCACHE)
   endif()
 endif()
 
-if(PROJECT_IS_TOP_LEVEL AND (NOT CMAKE_CROSSCOMPILING))
-  include(FetchContent)
-  option(BUILD_GMOCK OFF)
-  option(INSTALL_GTEST OFF)
-  FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.15.2
-  )
-  FetchContent_MakeAvailable(googletest)
-  add_library(GTest::GTest INTERFACE IMPORTED)
-  target_link_libraries(GTest::GTest INTERFACE gtest_main)
-endif()
-
 message(STATUS "Template project: CMAKE_CROSSCOMPILING = ${CMAKE_CROSSCOMPILING}")
 message(STATUS "Template project: USE_ETHERNET         = ${USE_ETHERNET}")
 message(STATUS "Template project: TARGET_NUCLEO        = ${TARGET_NUCLEO}")
+message(STATUS "Template project: BOARD_NAME           = ${BOARD_NAME}")
 
 add_subdirectory(${STLIB_DIR})
 message(STATUS "Using ST-LIB target: ${STLIB_LIBRARY}")
 
 file(GLOB_RECURSE GENERATOR_JSONS
+  CONFIGURE_DEPENDS
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/JSON_ADE/*.json
 )
 
@@ -70,8 +68,7 @@ add_custom_command(
   OUTPUT
   ${GENERATED_DATA_PACKETS}
   ${GENERATED_ORDER_PACKETS}
-  ${GENERATED_STATE_MACHINE}
-  COMMAND ${VENV_PYTHON} ${GENERATOR_SCRIPT} ${Board}
+  COMMAND ${PYTHON_FOR_TOOLS} ${GENERATOR_SCRIPT} ${BOARD_NAME}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   DEPENDS
   ${GENERATOR_SCRIPT}
@@ -79,16 +76,17 @@ add_custom_command(
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Packet_generation/DataTemplate.hpp
   ${CMAKE_SOURCE_DIR}/Core/Inc/Code_generation/Packet_generation/OrderTemplate.hpp
   ${GENERATOR_JSONS}
-  COMMENT "Generating packets for ${Board}"
+  COMMENT "Generating packets for ${BOARD_NAME}"
 )
 
-add_custom_target(run_generator ALL
+add_custom_target(run_generator
   DEPENDS
   ${GENERATED_DATA_PACKETS}
   ${GENERATED_ORDER_PACKETS}
 )
 
 file(GLOB_RECURSE METADATA_SOURCES
+  CONFIGURE_DEPENDS
   ${CMAKE_SOURCE_DIR}/Core/*.c
   ${CMAKE_SOURCE_DIR}/Core/*.cpp
   ${CMAKE_SOURCE_DIR}/Core/*.h
@@ -103,7 +101,7 @@ list(REMOVE_ITEM METADATA_SOURCES ${METADATA_OUTPUT})
 
 add_custom_command(
   OUTPUT ${METADATA_OUTPUT}
-  COMMAND ${VENV_PYTHON} ${METADATA_SCRIPT}
+  COMMAND ${PYTHON_FOR_TOOLS} ${METADATA_SCRIPT}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   DEPENDS
   ${METADATA_SCRIPT}
@@ -117,13 +115,13 @@ add_custom_target(generate_binary_metadata
 )
 
 if(CMAKE_CROSSCOMPILING)
-  file(GLOB_RECURSE SOURCE_C ${CMAKE_SOURCE_DIR}/Core/*.c)
-  file(GLOB_RECURSE SOURCE_CPP ${CMAKE_SOURCE_DIR}/Core/*.cpp)
-  file(GLOB_RECURSE SOURCE_H ${CMAKE_SOURCE_DIR}/Core/*.h)
-  file(GLOB_RECURSE SOURCE_HPP ${CMAKE_SOURCE_DIR}/Core/*.hpp)
+  file(GLOB_RECURSE SOURCE_C CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Core/*.c)
+  file(GLOB_RECURSE SOURCE_CPP CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Core/*.cpp)
+  file(GLOB_RECURSE SOURCE_H CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Core/*.h)
+  file(GLOB_RECURSE SOURCE_HPP CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Core/*.hpp)
 
   if(NOT BUILD_EXAMPLES)
-    file(GLOB_RECURSE EXAMPLE_CPP ${CMAKE_SOURCE_DIR}/Core/Src/Examples/*.cpp)
+    file(GLOB_RECURSE EXAMPLE_CPP CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/Core/Src/Examples/*.cpp)
     list(REMOVE_ITEM SOURCE_CPP ${EXAMPLE_CPP})
   endif()
 

@@ -60,7 +60,7 @@ def decode_cfsr_bus(cfsr, fault_addr):
             print(f"  BFARVALID : Bus fault address valid -> 0x{fault_addr:08X}")
     if bus_fault & 0b00000100:
         print(f"\033[91m Bus fault address imprecise\033[0m (DON'T LOOK CALL STACK)")
-        
+
     if bus_fault & 0b00100000:
         print("  LSPERR : Floating Point Unit lazy state preservation error")
     if bus_fault & 0b00010000:
@@ -97,8 +97,8 @@ def decode_cfsr(cfsr, fault_addr):
     error = decode_cfsr_bus(cfsr, fault_addr) + error
     error = decode_cfsr_usage(cfsr) + error
     return error
-    
-        
+
+
 def addr2line(addr):
     cmd = ["arm-none-eabi-addr2line", "-e", ELF_FILE, "-f", "-C", hex(addr)]
     try:
@@ -106,7 +106,7 @@ def addr2line(addr):
         return output
     except Exception as e:
         return f"addr2line failed: {e}"
-    
+
 def analyze_call_stack(calltrace_depth, calltrace_pcs, context=2):
     """
     Muestra el call stack, omitiendo frames sin fuente y mostrando snippet de código.
@@ -149,7 +149,7 @@ def print_code_context(lines, context=2):
         print("Invalid addr2line output")
         return
 
-    file_line = line_list[1].strip()  
+    file_line = line_list[1].strip()
     split = file_line.rfind(':')
     file_path = file_line[:split]
     try:
@@ -192,38 +192,38 @@ def hard_fault_analysis(memory_string):
         "cfsr": raw[9],
         "fault_addr": raw[10],
         "calltrace_depth": raw[11],
-        "calltrace_pcs": raw[12:28]  
+        "calltrace_pcs": raw[12:28]
     }
     if(hf["HF_Flag"] != 0xFF00FF00):
         print("There was no hardfault in your Microcontroller, Kudos for you, I hope...")
         return
     print("================HARDFAULT DETECTED ===========")
     print("Registers:")
-    
+
     for r in ['r0','r1','r2','r3','r12','lr','pc','psr']:
         print(f"  {r.upper():<4}: 0x{hf[r]:08X}")
-    
+
     print(f"  CFSR: 0x{hf['cfsr']:08X}")
     error = decode_cfsr(hf["cfsr"], hf["fault_addr"])
     print("\nSource Location:")
     pc_loc = addr2line(hf["pc"])
     lr_loc = addr2line(hf["lr"])
     print(f"  Linker Register : 0x{hf['lr']:08X} -> {lr_loc}")
-    
+
     print(f"  Program Counter : 0x{hf['pc']:08X} -> {pc_loc}")
     print_code_context(pc_loc)
-    
+
     analyze_call_stack(hf["calltrace_depth"],hf["calltrace_pcs"])
-    
+
     print("======================================================")
-    
-    
+
+
     print("Note: In Release builds (-O2/-O3) the PC may not point exactly to the failing instruction.")
     print("      During interrupts, bus faults, or stack corruption, the PC can be imprecise.")
     print("\nIn case of Imprecise error is dificult to find due to is asynchronous fault")
     print("The error has to be before PC. But not possible to know exactly when.")
     print("Check this link to know more : https://interrupt.memfault.com/blog/cortex-m-hardfault-debug#fn:8")
-    
+
 
 if __name__ == '__main__':
     out = read_flash()
@@ -241,4 +241,3 @@ if __name__ == '__main__':
         memory_string += mem
     memory_string = memory_string.replace(" ","")
     hard_fault_analysis(memory_string)
-    
