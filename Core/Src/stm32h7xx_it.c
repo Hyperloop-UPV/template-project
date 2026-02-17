@@ -422,19 +422,7 @@ void FDCAN3_IT0_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
  */
 void FDCAN3_IT1_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
 
-<<<<<<< refactor/EXTI
 void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
-=======
-/**
- * @brief This function handles DMA1 stream0 global interrupt.
- */
-
-void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
-
-/**
- * @brief This function handles SPI3 global interrupt.
- */
->>>>>>> main
 
 /**
  * @brief This function handles Ethernet global interrupt.
