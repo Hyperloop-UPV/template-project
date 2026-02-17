@@ -58,9 +58,6 @@
 
 /* External variables --------------------------------------------------------*/
 extern ETH_HandleTypeDef heth;
-extern DMA_HandleTypeDef hdma_adc1;
-extern DMA_HandleTypeDef hdma_adc2;
-extern DMA_HandleTypeDef hdma_adc3;
 extern DMA_HandleTypeDef hdma_i2c2_rx;
 extern DMA_HandleTypeDef hdma_i2c2_tx;
 extern I2C_HandleTypeDef hi2c2;
@@ -406,32 +403,6 @@ void FDCAN3_IT0_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
  * @brief This function handles FDCAN 3 Line 1 interrupt
  */
 void FDCAN3_IT1_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
-
-/**
- * @brief This function handles EXTI line0 interrupt.
- */
-void EXTI0_IRQHandler(void) {
-    /* USER CODE BEGIN EXTI0_IRQn 0 */
-
-    /* USER CODE END EXTI0_IRQn 0 */
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-    /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-    /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
- * @brief This function handles EXTI line1 interrupt.
- */
-void EXTI1_IRQHandler(void) {
-    /* USER CODE BEGIN EXTI1_IRQn 0 */
-
-    /* USER CODE END EXTI1_IRQn 0 */
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-    /* USER CODE BEGIN EXTI1_IRQn 1 */
-
-    /* USER CODE END EXTI1_IRQn 1 */
-}
 
 void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
 
