@@ -84,12 +84,12 @@ void HAL_MspInit(void) {
 }
 
 /**
-* @brief ADC MSP Initialization
-* This function configures the hardware resources used in this
+ * @brief ADC MSP Initialization
+ * This function configures the hardware resources used in this
  * example
-* @param hadc: ADC handle pointer
-* @retval None
-*/
+ * @param hadc: ADC handle pointer
+ * @retval None
+ */
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     (void)hadc;
     /* ADC MSP is handled by HALAL/Services/ADC/NewADC.hpp */
