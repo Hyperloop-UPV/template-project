@@ -134,6 +134,7 @@
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
+      "preLaunchCommands": [],
       "preLaunchTask": "CMake: build"
     },
     {
@@ -149,7 +150,8 @@
       "interface": "swd",
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
-      "showDevDebugOutput": "parsed"
+      "showDevDebugOutput": "parsed",
+      "preLaunchCommands": []
     },
     {
       "name": "MCU | ST-LINK | Attach (External GDB Server)",
