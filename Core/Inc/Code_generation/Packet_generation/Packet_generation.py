@@ -6,7 +6,7 @@ import sys
 
 templates_path = "Core/Inc/Code_generation/Packet_generation"
 
-def Generate_PacketDescription(JSONpath:str,board:str):
+def Generate_PacketDescription(JSONpath:str,board:str):    
     with open(JSONpath+"/boards.json") as f:
         boards = json.load(f)
     boards_name = []
@@ -20,9 +20,9 @@ def Generate_PacketDescription(JSONpath:str,board:str):
     else:
         print(f"Board {board} not found, exiting...")
         sys.exit()
-
+    
     return boards_name
-
+        
 
 #--------------DataPackets.hpp generation---------------#
 
@@ -36,8 +36,8 @@ def Get_data_context(board:BoardDescription):
                         if hasattr(measurement, "enum")and measurement.enum not in Enums:
                             Enums.append(measurement.enum)
         return Enums
-
-
+    
+    
     def GenerateDataPackets(board:BoardDescription):
         Packets =[]
         totaldata = []
@@ -50,10 +50,10 @@ def Get_data_context(board:BoardDescription):
                         tempdata +=(str(variable) +",")
                         tempdata_but_pointer +=("&"+str(variable) +",")
                     if tempdata.endswith(","):
-                        tempdata = tempdata[:-1]
+                        tempdata = tempdata[:-1]  
                     if tempdata_but_pointer.endswith(","):
                         tempdata_but_pointer = tempdata_but_pointer[:-1]
-
+                    
                     packet_variables = []
                     for measurement in packet_instance.measurements:
                         packet_variables.append({
@@ -67,11 +67,11 @@ def Get_data_context(board:BoardDescription):
                         aux_data = {"type": measurement.type, "name": measurement.id.replace(" ", "_").replace("-", "_")}
                         if not any(x["name"] == aux_data["name"] for x in totaldata):
                             totaldata.append(aux_data)
-
+        
         return Packets,totaldata
-
+    
     packets,data = GenerateDataPackets(board)
-
+    
     def GenerateGroupedSendingPackets(board: BoardDescription):
         datagram_sockets = [s["name"] for s in board.sockets.DatagramSockets]
         grouped_lookup = {}
@@ -84,17 +84,17 @@ def Get_data_context(board:BoardDescription):
             period = packet["period"]
             period_type = packet["period_type"]
             names = packet["name"]
-
+            
             key = (period, period_type)
             if key not in grouped_lookup:
                 grouped_lookup[key] = []
-
+                
             if isinstance(names, list):
                 for name in names:
                     grouped_lookup[key].append({"socket": socket_name, "name": name})
             else:
                 grouped_lookup[key].append({"socket": socket_name, "name": names})
-
+        
         grouped_list = []
         for (period, period_type), items in grouped_lookup.items():
             grouped_list.append({
@@ -123,16 +123,16 @@ def Generate_DataPackets_hpp(board_input:str):
     if board_instance.data_size == 0:
         if os.path.exists(data_packets_path):
             os.remove(data_packets_path)
-        return
-
+        return    
+  
     env= jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
     template = env.get_template("DataTemplate.hpp")
     context = Get_data_context(board_instance)
 
-
+    
     with open(data_packets_path,"w") as Output:
         Output.write(template.render(context))
-
+            
 #--------------OrderPackets.hpp generation---------------#
 
 def Get_order_context(board:BoardDescription):
@@ -145,8 +145,8 @@ def Get_order_context(board:BoardDescription):
                         if hasattr(measurement, "enum") and measurement.enum not in Enums:
                             Enums.append(measurement.enum)
         return Enums
-
-
+    
+    
     def GenerateOrderPackets(board:BoardDescription):
         Packets =[]
         totaldata = []
@@ -159,8 +159,8 @@ def Get_order_context(board:BoardDescription):
                         tempdata +=(str(variable) +",")
                         tempdata_but_pointer +=("&"+str(variable) +",")
                     if tempdata.endswith(","):
-                        tempdata = tempdata[:-1]
-                        tempdata_but_pointer = tempdata_but_pointer[:-1]
+                        tempdata = tempdata[:-1] 
+                        tempdata_but_pointer = tempdata_but_pointer[:-1] 
 
                     packet_variables = []
                     for measurement in packet_instance.measurements:
@@ -175,10 +175,10 @@ def Get_order_context(board:BoardDescription):
                         aux_data = {"type": measurement.type, "name": measurement.id}
                         if not any(x["name"] == aux_data["name"] for x in totaldata):
                             totaldata.append(aux_data)
-
+        
         return Packets,totaldata
-
-
+    
+    
     packets,data = GenerateOrderPackets(board)
     context = {
         "board": board.name,
@@ -197,12 +197,14 @@ def Generate_OrderPackets_hpp(board_input:str):
     if board_instance.order_size == 0:
         if os.path.exists(order_packets_path):
             os.remove(order_packets_path)
-        return
-
+        return    
+  
     env= jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
     template = env.get_template("OrderTemplate.hpp")
     context = Get_order_context(board_instance)
 
-
+    
     with open(order_packets_path,"w") as Output:
         Output.write(template.render(context))
+
+
