@@ -110,14 +110,11 @@ class PacketDescription:
             self.measurements.append(MeasurmentsDescription(measurements,variable, filename))
 
     @staticmethod
-    def check_for_sending(packet:dict):
+    def check_for_sending(packet: dict):
         if "period" in packet and "period_type" in packet and "socket" in packet:
             name = packet["name"].replace(" ", "_").replace("-", "_")
-            return {"name": name,"period": packet["period"],"period_type":packet["period_type"],"socket": packet["socket"]}
+            return {"name": name, "period": packet["period"], "period_type": packet["period_type"], "socket": packet["socket"]}
 
-        elif "period_ms" in packet and "socket" in packet:
-            name = packet["name"].replace(" ", "_").replace("-", "_")
-            return {"name": name,"period": packet["period_ms"],"period_type":"ms","socket": packet["socket"]}
         else:
             return None
 class MeasurmentsDescription:
