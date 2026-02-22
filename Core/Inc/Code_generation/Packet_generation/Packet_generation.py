@@ -200,9 +200,8 @@ def Generate_OrderPackets_hpp(board_input:str):
     env= jinja2.Environment(loader=jinja2.FileSystemLoader(templates_path))
     template = env.get_template("OrderTemplate.hpp")
     context = Get_order_context(board_instance)
+    with open(order_packets_path, "w") as Output:
+            Output.write(template.render(context))
 
-
-    with open(order_packets_path,"w") as Output:
-        Output.write(template.render(context))
 
 
