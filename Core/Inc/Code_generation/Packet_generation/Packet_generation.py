@@ -120,7 +120,7 @@ def Get_data_context(board:BoardDescription):
 def Generate_DataPackets_hpp(board_input:str):
     data_packets_path = "Core/Inc/Communications/Packets/DataPackets.hpp"
     board_instance = globals()[board_input]
-    if board_instance.data_size == 0:
+    if board_instance.data_size == 0 and len(board_instance.sockets.DatagramSockets) == 0:
         if os.path.exists(data_packets_path):
             os.remove(data_packets_path)
         return
@@ -192,7 +192,7 @@ def Get_order_context(board: BoardDescription):
 def Generate_OrderPackets_hpp(board_input:str):
     order_packets_path = "Core/Inc/Communications/Packets/OrderPackets.hpp"
     board_instance = globals()[board_input]
-    if board_instance.order_size == 0:
+    if (board_instance.order_size == 0 and len(board_instance.sockets.ServerSockets) == 0 and len(board_instance.sockets.Sockets) == 0):
         if os.path.exists(order_packets_path):
             os.remove(order_packets_path)
         return
