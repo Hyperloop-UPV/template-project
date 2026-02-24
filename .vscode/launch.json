@@ -172,6 +172,22 @@
       ]
     },
     {
+      "name": "MCU | ST-LINK | Attach (No Flash)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "stlink",
+      "serverpath": "ST-LINK_gdbserver",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "runToEntryPoint": "",
+      "postAttachCommands": []
+    },
+    {
       "name": "SIM | Rosetta | Debug App",
       "type": "cppdbg",
       "request": "launch",
