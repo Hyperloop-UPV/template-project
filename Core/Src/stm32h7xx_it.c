@@ -260,9 +260,7 @@ __attribute__((noreturn, optimize("O0"))) void my_fault_handler_c(sContextStateF
         const uint16_t INVSTATE = usage_fault & 0x0002;   // Invalid processor state
         const uint16_t UNDEFINSTR = usage_fault & 0x0001; // Undefined instruction.
     }
-    if (usage_fault | bus_fault) {
-        scan_call_stack(frame, &log_hard_fault);
-    }
+    scan_call_stack(frame, &log_hard_fault);
     volatile uint8_t metadata_buffer[0x100];
     memcpy(metadata_buffer, (void*)METADATA_FLASH_ADDR, 0x100);
     // write log hard fault
