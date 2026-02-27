@@ -18,8 +18,6 @@
         "-f",
         ".vscode/stm32h7x.cfg",
         "-c",
-        "transport select swd",
-        "-c",
         "gdb_port 3333",
         "-c",
         "tcl_port 6666",
@@ -28,13 +26,7 @@
       ],
       "isBackground": true,
       "problemMatcher": {
-        "owner": "custom",
-        "pattern": [
-          {
-            "regexp": ".*",
-            "message": 0
-          }
-        ],
+        "base": "$gcc",
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".*",

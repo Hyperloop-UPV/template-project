@@ -6,17 +6,28 @@ class BoardDescription:
         self.name = name
         self.id = board["board_id"]
         self.ip = board["board_ip"]
+
+        # Load backend IP from general_info.json
+        backend_ip = "0.0.0.0"
+        try:
+            with open(JSONpath + "/general_info.json") as f:
+                general_info = json.load(f)
+                if "addresses" in general_info and "backend" in general_info["addresses"]:
+                    backend_ip = general_info["addresses"]["backend"]
+        except Exception as e:
+            print(f"Warning: Could not load backend IP from general_info.json: {e}")
+
         #Sockets:
         try:
             with open(JSONpath+"/boards/"+name+"/sockets.json") as s:
                 socks = json.load(s)
-                self.sockets=self.SocketsDescription(socks,self.ip)
+                self.sockets = self.SocketsDescription(socks, self.ip, backend_ip)
         except Exception as e:
             raise Exception(f"Error in file {JSONpath}/boards/{name}/sockets.json: {e}")
         #Packets:
         self.sending_packets = []
-        self.data_size =0
-        self.order_size =0
+        self.data_size = 0
+        self.order_size = 0
         self.measurement_lists = []
         self.packets = {}
         for measurement in board["measurements"]:
@@ -60,11 +71,11 @@ class BoardDescription:
             period_type = item.get("period_type")
             socket = item.get("socket")
             name = item.get("name")
-            key = (period,period_type, socket)
+            key = (period, period_type, socket)
             lookup.setdefault(key, []).append(name)
 
-        for (period,period_type, socket), names in lookup.items():
-            entry = {"period": period,"period_type":period_type, "socket": socket}
+        for (period, period_type, socket), names in lookup.items():
+            entry = {"period": period, "period_type": period_type, "socket": socket}
             if len(names) == 1:
                 entry["name"] = names[0]
             else:
@@ -76,23 +87,30 @@ class BoardDescription:
 
 
     class SocketsDescription:
-        def __init__(self,sockets:list,board_ip:str):
-            self.allSockets=[]
+        def __init__(self, sockets: list, board_ip: str, backend_ip: str):
+            self.allSockets = []
             self.ServerSockets = []
             self.Sockets = []
             self.DatagramSockets = []
             self.board_ip = board_ip
+            self.backend_ip = backend_ip
             for sock in sockets:
                 name = sock["name"].replace(" ", "_").replace("-", "_")
                 sock_type = sock["type"]
-                self.allSockets.append({"name": name,"type":sock_type})
+                self.allSockets.append({"name": name, "type": sock_type})
 
                 if sock_type == "ServerSocket":
-                    self.ServerSockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "port": sock["port"]})
+                    self.ServerSockets.append({"name": name, "type": sock_type, "board_ip": self.board_ip, "port": sock["port"]})
                 elif sock_type == "Socket":
-                    self.Sockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "local_port": sock["local_port"], "remote_ip": sock["remote_ip"], "remote_port": sock["remote_port"]})
+                    remote_ip = sock["remote_ip"]
+                    if remote_ip == "backend":
+                        remote_ip = self.backend_ip
+                    self.Sockets.append({"name": name, "type": sock_type, "board_ip": self.board_ip, "local_port": sock["local_port"], "remote_ip": remote_ip, "remote_port": sock["remote_port"]})
                 elif sock_type == "DatagramSocket":
-                    self.DatagramSockets.append({"name": name,"type":sock_type,"board_ip":self.board_ip, "port": sock["port"],"remote_ip":sock["remote_ip"]})
+                    remote_ip = sock["remote_ip"]
+                    if remote_ip == "backend":
+                        remote_ip = self.backend_ip
+                    self.DatagramSockets.append({"name": name, "type": sock_type, "board_ip": self.board_ip, "port": sock["port"], "remote_ip": remote_ip})
 
 
 
@@ -110,14 +128,11 @@ class PacketDescription:
             self.measurements.append(MeasurmentsDescription(measurements,variable, filename))
 
     @staticmethod
-    def check_for_sending(packet:dict):
+    def check_for_sending(packet: dict):
         if "period" in packet and "period_type" in packet and "socket" in packet:
             name = packet["name"].replace(" ", "_").replace("-", "_")
-            return {"name": name,"period": packet["period"],"period_type":packet["period_type"],"socket": packet["socket"]}
+            return {"name": name, "period": packet["period"], "period_type": packet["period_type"], "socket": packet["socket"]}
 
-        elif "period_ms" in packet and "socket" in packet:
-            name = packet["name"].replace(" ", "_").replace("-", "_")
-            return {"name": name,"period": packet["period_ms"],"period_type":"ms","socket": packet["socket"]}
         else:
             return None
 class MeasurmentsDescription:
@@ -166,4 +181,6 @@ class MeasurmentsDescription:
             type += "_t"
         elif type == "float32":
             type = "float"
+        elif type == "float64":
+            type = "double"
         return type

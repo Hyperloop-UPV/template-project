@@ -120,7 +120,6 @@ void hardfault_flash_write(
     const void* data_metadata,
     size_t len_metadata
 ) {
-    __disable_irq();
     HAL_FLASH_Unlock();
 
     // Erase sector
@@ -133,7 +132,8 @@ void hardfault_flash_write(
     erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;
 
     if (HAL_FLASHEx_Erase(&erase, &sector_error) != HAL_OK) {
-        __BKPT(0);
+        HAL_FLASH_Lock();
+        return;
     }
 
     size_t offset, copy_len;
@@ -150,7 +150,8 @@ void hardfault_flash_write(
                 addr_hard_fault + offset,
                 (uintptr_t)block
             ) != HAL_OK) {
-            __BKPT(0);
+            HAL_FLASH_Lock();
+            return;
         }
         offset += 32;
     }
@@ -166,7 +167,8 @@ void hardfault_flash_write(
                 addr_metadata + offset,
                 (uintptr_t)block
             ) != HAL_OK) {
-            __BKPT(0);
+            HAL_FLASH_Lock();
+            return;
         }
         offset += 32;
     }
@@ -175,13 +177,12 @@ void hardfault_flash_write(
     SCB_InvalidateDCache();
 
     HAL_FLASH_Lock();
-    __enable_irq();
 }
 static uint8_t is_valid_pc(uint32_t pc) {
     pc &= ~1U; // Thumb
     return (pc >= (uint32_t)&_stext && pc < (uint32_t)&_etext);
 }
-__attribute__((noreturn, optimize("O0"))) static void
+__attribute__((optimize("O0"))) static void
 scan_call_stack(sContextStateFrame* frame, HardFaultLog* log_hard_fault) {
     uint32_t* stack_start = (uint32_t*)&_sstack;
     uint32_t* stack_end = (uint32_t*)&_estack;
@@ -271,7 +272,16 @@ __attribute__((noreturn, optimize("O0"))) void my_fault_handler_c(sContextStateF
         &metadata_buffer,
         sizeof(metadata_buffer)
     );
-    // reboot the system
+
+    // halt only when a debugger is attached, otherwise reboot.
+    volatile uint32_t* dhcsr = (volatile uint32_t*)0xE000EDF0;
+    if ((*dhcsr & 0x1U) != 0U) {
+        __BKPT(0);
+        while (1) {
+        }
+    }
+
+    // Reboot the system in non-debug runs.
     volatile uint32_t* aircr = (volatile uint32_t*)0xE000ED0C;
     __asm volatile("dsb");
     *aircr = (0x05FA << 16) | 0x1 << 2;
@@ -297,37 +307,16 @@ void NMI_Handler(void) {
 /**
  * @brief This function handles Memory management fault.
  */
-void MemManage_Handler(void) {
-    extern void my_fault_handler_c(sContextStateFrame * frame);
-
-    __asm volatile("mrs r0, msp\n" // obtener stack frame
-                   "b my_fault_handler_c\n");
-}
+__attribute__((naked)) void MemManage_Handler(void) { HARDFAULT_HANDLING_ASM(); }
 /**
  * @brief This function handles Pre-fetch fault, memory access fault.
  */
-void BusFault_Handler(void) {
-    /* USER CODE BEGIN BusFault_IRQn 0 */
-
-    /* USER CODE END BusFault_IRQn 0 */
-    while (1) {
-        /* USER CODE BEGIN W1_BusFault_IRQn 0 */
-        /* USER CODE END W1_BusFault_IRQn 0 */
-    }
-}
+__attribute__((naked)) void BusFault_Handler(void) { HARDFAULT_HANDLING_ASM(); }
 
 /**
  * @brief This function handles Undefined instruction or illegal state.
  */
-void UsageFault_Handler(void) {
-    /* USER CODE BEGIN UsageFault_IRQn 0 */
-
-    /* USER CODE END UsageFault_IRQn 0 */
-    while (1) {
-        /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
-        /* USER CODE END W1_UsageFault_IRQn 0 */
-    }
-}
+__attribute__((naked)) void UsageFault_Handler(void) { HARDFAULT_HANDLING_ASM(); }
 
 /**
  * @brief This function handles System service call via SWI instruction.
@@ -404,32 +393,6 @@ void FDCAN3_IT0_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
  * @brief This function handles FDCAN 3 Line 1 interrupt
  */
 void FDCAN3_IT1_IRQHandler(void) { HAL_FDCAN_IRQHandler(&hfdcan1); }
-
-/**
- * @brief This function handles EXTI line0 interrupt.
- */
-void EXTI0_IRQHandler(void) {
-    /* USER CODE BEGIN EXTI0_IRQn 0 */
-
-    /* USER CODE END EXTI0_IRQn 0 */
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-    /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-    /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
- * @brief This function handles EXTI line1 interrupt.
- */
-void EXTI1_IRQHandler(void) {
-    /* USER CODE BEGIN EXTI1_IRQn 0 */
-
-    /* USER CODE END EXTI1_IRQn 0 */
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-    /* USER CODE BEGIN EXTI1_IRQn 1 */
-
-    /* USER CODE END EXTI1_IRQn 1 */
-}
 
 void FMAC_IRQHandler(void) { HAL_FMAC_IRQHandler(&hfmac); }
 

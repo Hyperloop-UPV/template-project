@@ -13,16 +13,7 @@
         ".vscode/stlink.cfg",
         ".vscode/stm32h7x.cfg"
       ],
-      "serverArgs": [
-        "-c",
-        "transport select swd",
-        "-c",
-        "gdb_port 3333",
-        "-c",
-        "tcl_port 6666",
-        "-c",
-        "telnet_port 4444"
-      ],
+      "serverArgs": [],
       "gdbPath": "arm-none-eabi-gdb",
       "device": "STM32H723ZGTx",
       "interface": "swd",
@@ -33,13 +24,13 @@
         "monitor reset halt"
       ],
       "postLaunchCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
       "postRestartCommands": [
         "monitor halt",
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
@@ -67,16 +58,7 @@
         ".vscode/stlink.cfg",
         ".vscode/stm32h7x.cfg"
       ],
-      "serverArgs": [
-        "-c",
-        "transport select swd",
-        "-c",
-        "gdb_port 3333",
-        "-c",
-        "tcl_port 6666",
-        "-c",
-        "telnet_port 4444"
-      ],
+      "serverArgs": [],
       "gdbPath": "arm-none-eabi-gdb",
       "device": "STM32H723ZGTx",
       "interface": "swd",
@@ -87,13 +69,13 @@
         "monitor reset halt"
       ],
       "postLaunchCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
       "postRestartCommands": [
         "monitor halt",
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
@@ -123,7 +105,7 @@
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
       "postAttachCommands": [
-        "monitor rtt setup 0x24000000 0x24080000 \"SEGGER RTT\"",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
         "monitor rtt start",
         "monitor rtt server start 9090 0"
       ],
@@ -152,9 +134,7 @@
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
-      "preLaunchCommands": [
-        "monitor reset halt"
-      ],
+      "preLaunchCommands": [],
       "preLaunchTask": "CMake: build"
     },
     {
@@ -171,9 +151,7 @@
       "runToEntryPoint": "main",
       "svdFile": "${workspaceFolder}/STM32H723.svd",
       "showDevDebugOutput": "parsed",
-      "preLaunchCommands": [
-        "monitor reset halt"
-      ]
+      "preLaunchCommands": []
     },
     {
       "name": "MCU | ST-LINK | Attach (External GDB Server)",
@@ -192,6 +170,22 @@
       "postAttachCommands": [
         "monitor halt"
       ]
+    },
+    {
+      "name": "MCU | ST-LINK | Attach (No Flash)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "stlink",
+      "serverpath": "ST-LINK_gdbserver",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "runToEntryPoint": "",
+      "postAttachCommands": []
     },
     {
       "name": "SIM | Rosetta | Debug App",
