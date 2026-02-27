@@ -1,14 +1,16 @@
 import subprocess
 import struct
-import re
 import os
 from dataclasses import dataclass
 from typing import List, Optional
+
 HF_FLASH_ADDR = 0x080C0000
 HF_FLASH_ADDR_STRING = "0x080C000"
 ELF_FILE = "out/build/latest.elf"
 
 CALL_TRACE_MAX_DEPTH = 16
+
+
 @dataclass
 class HardFaultFrame:
     flag: int
@@ -24,12 +26,17 @@ class HardFaultFrame:
     fault_addr: int
     calltrace_depth: int
     calltrace_pcs: List[int]
+
+
 def read_flash():
     try:
         cmd = [
             "STM32_Programmer_CLI",
-            "-c", "port=SWD",
-            "-r32", hex(HF_FLASH_ADDR), "112"
+            "-c",
+            "port=SWD",
+            "-r32",
+            hex(HF_FLASH_ADDR),
+            "112",
         ]
         out = subprocess.check_output(cmd, text=True)
         return out
@@ -40,8 +47,8 @@ def read_flash():
     except FileNotFoundError:
         print("STM32_Programmer_CLI not found. Make sure it is installed and in PATH.")
         return None
-    
-    
+
+
 def decode_cfsr_memory(cfsr, fault_addr):
     memory_fault = cfsr & 0xFF
     if memory_fault == 0:
@@ -66,6 +73,7 @@ def decode_cfsr_memory(cfsr, fault_addr):
         print("  IACCVIOL : Instruction access violation")
     return 1
 
+
 # --------------------------
 # Decode Bus Fault (BFSR)
 # --------------------------
@@ -75,10 +83,10 @@ def decode_cfsr_bus(cfsr, fault_addr):
         return 0
     print("\nBus Fault (BFSR):")
     if bus_fault & 0b10000000:
-        if(bus_fault & 0b00000001):
+        if bus_fault & 0b00000001:
             print(f"  BFARVALID : Bus fault address valid -> 0x{fault_addr:08X}")
     if bus_fault & 0b00000100:
-        print(f"\033[91m Bus fault address imprecise\033[0m (DON'T LOOK CALL STACK)")
+        print("\033[91m Bus fault address imprecise\033[0m (DON'T LOOK CALL STACK)")
 
     if bus_fault & 0b00100000:
         print("  LSPERR : Floating Point Unit lazy state preservation error")
@@ -87,6 +95,7 @@ def decode_cfsr_bus(cfsr, fault_addr):
     if bus_fault & 0b00001000:
         print("  UNSTKERR : Stack error on return from exception")
     return 2
+
 
 # --------------------------
 # Decode Usage Fault (UFSR)
@@ -110,6 +119,7 @@ def decode_cfsr_usage(cfsr):
         print("  UNDEFINSTR : Undefined instruction")
     return 4
 
+
 def decode_cfsr(cfsr, fault_addr):
     error = 0
     error = decode_cfsr_memory(cfsr, fault_addr) + error
@@ -128,25 +138,25 @@ def addr2line(addr):
 
 
 def print_code_context(lines, context=2):
-    #addr2line
-    #line 0: function name
-    #line 1 : file : line
+    # addr2line
+    # line 0: function name
+    # line 1 : file : line
     line_list = lines.splitlines()
     if len(line_list) < 2:
         print("Invalid addr2line output")
         return
-    
+
     file_line = line_list[1].strip()
-    split = file_line.rfind(':')
+    split = file_line.rfind(":")
 
     if split == -1:
         print("Invalid file:line format")
         return
-    
+
     file_path = file_line[:split]
 
     try:
-        line_no = int(file_line[split+1:]) - 1
+        line_no = int(file_line[split + 1 :]) - 1
     except ValueError:
         print("Couldn't parse line number")
         return
@@ -169,7 +179,6 @@ def print_code_context(lines, context=2):
             print(f"\033[91m{i+1:>4}: {code}\033[0m")
         else:
             print(f"{i+1:>4}: {code}")
-
 
 
 def parse_hardfault(memory_string: str) -> Optional[HardFaultFrame]:
@@ -196,18 +205,17 @@ def parse_hardfault(memory_string: str) -> Optional[HardFaultFrame]:
             cfsr=raw[9],
             fault_addr=raw[10],
             calltrace_depth=raw[11],
-            calltrace_pcs=list(raw[12:28])
+            calltrace_pcs=list(raw[12:28]),
         )
 
     except Exception as e:
         print(f"Error parsing hardfault frame: {e}")
         return None
-    
-    
-def analyze_call_stack(calltrace_depth: int,
-                       calltrace_pcs: List[int],
-                       context: int = 1):
 
+
+def analyze_call_stack(
+    calltrace_depth: int, calltrace_pcs: List[int], context: int = 1
+):
     print("\n==== Call Stack Trace ====")
 
     try:
@@ -226,7 +234,6 @@ def analyze_call_stack(calltrace_depth: int,
         depth = min(calltrace_depth, len(calltrace_pcs), CALL_TRACE_MAX_DEPTH)
 
         for i in range(depth):
-
             pc = calltrace_pcs[i]
 
             # Validación básica de PC
@@ -258,54 +265,65 @@ def analyze_call_stack(calltrace_depth: int,
         print(f"Unexpected error in analyze_call_stack: {e}")
 
     print("===============================================")
-def hard_fault_analysis(hf,context):
-    
-    if(hf.flag != 0xFF00FF00):
-        print("There was no hardfault in your Microcontroller, Kudos for you, I hope...")
+
+
+def hard_fault_analysis(hf, context):
+    if hf.flag != 0xFF00FF00:
+        print(
+            "There was no hardfault in your Microcontroller, Kudos for you, I hope..."
+        )
         return
-    
+
     print("================HARDFAULT DETECTED ===========")
     print("Registers:")
 
-    for r in ['r0','r1','r2','r3','r12','lr','pc','psr']:
+    for r in ["r0", "r1", "r2", "r3", "r12", "lr", "pc", "psr"]:
         value = getattr(hf, r)
-        print(f"  {r.upper():<4}: 0x{value:08X}") 
+        print(f"  {r.upper():<4}: 0x{value:08X}")
     print("\n")
     print("Register that contains the info about the HardFault")
     print(f"  CFSR: 0x{hf.cfsr:08X}")
-    #get the cause of the error
+    # get the cause of the error
     print("------HardFault Fail------")
-    error = decode_cfsr(hf.cfsr, hf.fault_addr)
+    decode_cfsr(hf.cfsr, hf.fault_addr)
     print("---------------------------")
-    
+
     pc_loc = addr2line(hf.pc)
     lr_loc = addr2line(hf.lr)
-    
+
     print("\n=======Source Location: ===========\n")
     print(f" --> Linker Register : 0x{hf.lr:08X}\n -> {lr_loc}")
-    print_code_context(lr_loc,context)
+    print_code_context(lr_loc, context)
     print("\n")
     print(f" -->Program Counter : 0x{hf.pc:08X}\n -> {pc_loc}")
-    print_code_context(pc_loc,context)
+    print_code_context(pc_loc, context)
     print("=============================")
-    analyze_call_stack(hf.calltrace_depth,hf.calltrace_pcs,context)
+    analyze_call_stack(hf.calltrace_depth, hf.calltrace_pcs, context)
 
     print("======================================================")
 
-
-    print("Note: In Release builds (-O2/-O3) the PC may not point exactly to the failing instruction.")
-    print("      During interrupts, bus faults, or stack corruption, the PC can be imprecise.")
-    print("\nIn case of Imprecise error is dificult to find due to is asynchronous fault")
+    print(
+        "Note: In Release builds (-O2/-O3) the PC may not point exactly to the failing instruction."
+    )
+    print(
+        "      During interrupts, bus faults, or stack corruption, the PC can be imprecise."
+    )
+    print(
+        "\nIn case of Imprecise error is dificult to find due to is asynchronous fault"
+    )
     print("The error has to be before PC. But not possible to know exactly when.")
-    print("Check this link to know more : https://interrupt.memfault.com/blog/cortex-m-hardfault-debug#fn:8")
+    print(
+        "Check this link to know more : https://interrupt.memfault.com/blog/cortex-m-hardfault-debug#fn:8"
+    )
 
-#get the memory with the address of HardFault
+
+# get the memory with the address of HardFault
 def extract_memory_dump(cli_output: str) -> Optional[str]:
     pos = cli_output.rfind(HF_FLASH_ADDR_STRING)
     if pos == -1:
         print("The address was not found in CLI output")
         return None
-    
+
     flash = cli_output[pos:]
 
     memory_string = ""
@@ -318,9 +336,8 @@ def extract_memory_dump(cli_output: str) -> Optional[str]:
     return memory_string.replace(" ", "")
 
 
-
-if __name__ == '__main__':
-    #First get all the information from the flash Memory
+if __name__ == "__main__":
+    # First get all the information from the flash Memory
     out = read_flash()
     if out is None:
         exit(1)
@@ -331,7 +348,7 @@ if __name__ == '__main__':
     hf = parse_hardfault(memory_string)
     if not hf:
         exit(1)
-    print("Lines of context to watch (max 10):",end="")
+    print("Lines of context to watch (max 10):", end="")
     try:
         context = int(input())
     except ValueError:
@@ -339,4 +356,4 @@ if __name__ == '__main__':
     if context < 0 or context > 10:
         context = 10
     print("\n")
-    hard_fault_analysis(hf,context)
+    hard_fault_analysis(hf, context)
