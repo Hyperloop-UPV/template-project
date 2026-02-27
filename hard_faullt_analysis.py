@@ -271,21 +271,24 @@ def hard_fault_analysis(hf,context):
         value = getattr(hf, r)
         print(f"  {r.upper():<4}: 0x{value:08X}") 
     print("\n")
+    print("Register that contains the info about the HardFault")
     print(f"  CFSR: 0x{hf.cfsr:08X}")
     #get the cause of the error
+    print("------HardFault Fail------")
     error = decode_cfsr(hf.cfsr, hf.fault_addr)
-    
+    print("---------------------------")
     
     pc_loc = addr2line(hf.pc)
     lr_loc = addr2line(hf.lr)
     
-    print("\nSource Location:")
-    print(f"  Linker Register : 0x{hf.lr:08X} -> {lr_loc}")
-    print(lr_loc,context)
-    print(f"  Program Counter : 0x{hf.pc:08X} -> {pc_loc}")
+    print("\n=======Source Location: ===========\n")
+    print(f" --> Linker Register : 0x{hf.lr:08X}\n -> {lr_loc}")
+    print_code_context(lr_loc,context)
+    print("\n")
+    print(f" -->Program Counter : 0x{hf.pc:08X}\n -> {pc_loc}")
     print_code_context(pc_loc,context)
-
-    analyze_call_stack(hf.call_stack_trace,hf.calltrace_pcs,context)
+    print("=============================")
+    analyze_call_stack(hf.calltrace_depth,hf.calltrace_pcs,context)
 
     print("======================================================")
 
@@ -328,7 +331,7 @@ if __name__ == '__main__':
     hf = parse_hardfault(memory_string)
     if not hf:
         exit(1)
-    print("Lines of context to watch (max 10):")
+    print("Lines of context to watch (max 10):",end="")
     try:
         context = int(input())
     except ValueError:
