@@ -16,6 +16,7 @@ ctest --preset simulator-all
 - Template setup: [`docs/template-project/setup.md`](docs/template-project/setup.md)
 - Build and debug: [`docs/template-project/build-debug.md`](docs/template-project/build-debug.md)
 - Testing and quality: [`docs/template-project/testing.md`](docs/template-project/testing.md)
+- TCP/IP hardware stress example: [`docs/template-project/example-tcpip.md`](docs/template-project/example-tcpip.md)
 - ST-LIB docs (inside this repository): [`deps/ST-LIB/docs/setup.md`](deps/ST-LIB/docs/setup.md)
 
 ## Main Working Modes

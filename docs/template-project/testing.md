@@ -44,3 +44,15 @@ pre-commit run --all-files
 - `Compile Checks`: builds MCU matrix (no simulator tests)
 - `Run Simulator Tests`: runs tests using `simulator` preset
 - `Format Checks`: validates formatting with `pre-commit`
+
+## 5. TCP/IP Hardware Stress Tests
+
+For Ethernet/socket stress testing on real hardware, see:
+
+- [`docs/template-project/example-tcpip.md`](example-tcpip.md)
+- Deep-dive implementation manual: [`docs/template-project/tcpip-change-manual.md`](tcpip-change-manual.md)
+- Per-example quick guides: [`docs/examples/README.md`](../examples/README.md)
+- One-shot Nucleo flow: `./tools/run_example_tcpip_nucleo.sh`
+- Run strict matrix gate: `./tools/example_tcpip_quality_gate.sh`
+- Run long soak: `./tools/example_tcpip_soak.sh`
+- Run multi-hour soak + ratio summary: `./tools/example_tcpip_soak_hours.sh`

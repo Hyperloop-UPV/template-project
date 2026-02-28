@@ -57,3 +57,9 @@ Useful tasks in `.vscode/tasks.json`:
 - `MCU | OpenOCD | Start Server`
 - `MCU | OpenOCD | RTT Console`
 - `MCU | ST-LINK | Start GDB Server`
+
+## 5. Example Guides
+
+Per-example build and validation guides live in:
+
+- [`docs/examples/README.md`](../examples/README.md)
