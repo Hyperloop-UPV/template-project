@@ -50,7 +50,6 @@ pre-commit run --all-files
 For Ethernet/socket stress testing on real hardware, see:
 
 - [`docs/template-project/example-tcpip.md`](example-tcpip.md)
-- Deep-dive implementation manual: [`docs/template-project/tcpip-change-manual.md`](tcpip-change-manual.md)
 - Per-example quick guides: [`docs/examples/README.md`](../examples/README.md)
 - One-shot Nucleo flow: `./tools/run_example_tcpip_nucleo.sh`
 - Run strict matrix gate: `./tools/example_tcpip_quality_gate.sh`

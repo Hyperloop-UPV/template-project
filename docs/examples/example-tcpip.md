@@ -109,4 +109,3 @@ Use `--host-bind 192.168.1.9` when the USB/Ethernet link and the Wi‑Fi are bot
 For the full command list, telemetry pages, and long-run scripts, see:
 
 - [Detailed ExampleTCPIP guide](../template-project/example-tcpip.md)
-- [TCP/IP change manual](../template-project/tcpip-change-manual.md)

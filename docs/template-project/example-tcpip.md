@@ -9,10 +9,6 @@
 
 It includes command/control, payload integrity checks (checksum), burst/saturation traffic, forced disconnect/reconnect and UDP probe/ack.
 
-Deep implementation notes for all robustness changes:
-
-- [`docs/template-project/tcpip-change-manual.md`](tcpip-change-manual.md)
-
 Control command IDs used by the host script:
 
 - `CMD_RESET=1`
