@@ -102,7 +102,7 @@ fi
 
 if [[ -z "${host_ip}" ]]; then
   echo "Could not determine host IPv4 on interface ${iface}" >&2
-  echo "Tip: run tools/configure_nucleo_host_network_macos.sh first or pass --host-ip." >&2
+  echo "Tip: configure the host-side board-link interface manually or pass --host-ip." >&2
   exit 2
 fi
 
@@ -123,7 +123,7 @@ board_route_iface="$(printf '%s\n' "${board_route_output}" | awk '/interface:/{p
 if [[ "${board_route_iface}" != "${iface}" ]]; then
   echo "${board_route_output}"
   echo "Board route does not use ${iface} (got: ${board_route_iface:-none})." >&2
-  echo "Proceeding because source-binding to ${host_ip} can still reach the board on macOS." >&2
+  echo "Proceeding because source-binding to ${host_ip} can still reach the board even if the OS route points elsewhere." >&2
 fi
 
 if [[ "${skip_localnet_check}" -eq 0 ]]; then
@@ -134,9 +134,8 @@ if [[ "${skip_localnet_check}" -eq 0 ]]; then
     if printf '%s\n' "${local_probe}" | rg -q "No route to host"; then
       cat >&2 <<'EOF'
 Host can reach internet but cannot open local-network routes from this process context.
-Likely macOS Local Network privacy block for the app executing this script
-(e.g. VS Code / Codex extension host). Enable it in:
-System Settings > Privacy & Security > Local Network
+The current app or shell process may be blocked from using local-network routes,
+or the OS may require an explicit permission for local-network access.
 EOF
       exit 2
     fi

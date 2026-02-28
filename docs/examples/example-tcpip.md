@@ -59,6 +59,8 @@ Main command IDs:
 
 ## How to validate
 
+Make sure the host-side board-link interface is configured on `192.168.1.9` before running the stress tools.
+
 Base stress run:
 
 ```sh

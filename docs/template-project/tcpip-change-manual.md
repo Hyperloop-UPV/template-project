@@ -362,15 +362,13 @@ Cambios:
 
 ## 10. Cambios en scripts de ejecución
 
-### 10.1 Host network seguro en macOS
+### 10.1 Suposiciones de red del host
 
-Archivo: `tools/configure_nucleo_host_network_macos.sh`
+Qué importa:
 
-Qué añade:
-
-- prioriza Wi-Fi y mantiene USB-Ethernet para la placa.
-- valida ruta default (internet) y ruta a board por interfaz correcta.
-- detecta bloqueo de permiso "Local Network" y lo reporta claramente.
+- el host debe tener una interfaz en la misma subred que la placa.
+- los ejemplos actuales asumen por defecto `192.168.1.9` para el host y `192.168.1.7` para la placa.
+- los scripts de test usan `--host-bind` para fijar la IP origen y poder llegar a la placa incluso si la ruta general del sistema apunta por otra interfaz.
 
 ### 10.2 Runner end-to-end de Nucleo
 
