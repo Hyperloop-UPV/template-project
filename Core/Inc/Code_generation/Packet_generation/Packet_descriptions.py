@@ -147,7 +147,7 @@ class MeasurmentsDescription:
             raise Exception(f"Measurement not found for variable: {variable} in file: {filename}")
 
         self.name = measurement["name"]
-        self.type = (self._unsigned_int_correction(measurement["type"]).replace(" ", "_").replace("-", "_"))
+        self.type = (self._numeric_type_correction(measurement["type"]).replace(" ", "_").replace("-", "_"))
         if self.type == "enum":
             values = []
             for value in measurement["enumValues"]:
@@ -175,9 +175,10 @@ class MeasurmentsDescription:
 
 
     @staticmethod
-    def _unsigned_int_correction(type:str):
-        aux_type = type[:4]
-        if aux_type == "uint":
+    def _numeric_type_correction(type:str):
+        if type.startswith("uint") and not type.endswith("_t"):
+            type += "_t"
+        elif type.startswith("int") and not type.endswith("_t"):
             type += "_t"
         elif type == "float32":
             type = "float"
