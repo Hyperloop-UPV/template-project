@@ -40,6 +40,13 @@ The build output is copied to:
 
 - `out/build/latest.elf`
 
+If the selected `BOARD_NAME` enables packet code generation, the build also regenerates:
+
+- `Core/Inc/Communications/Packets/DataPackets.hpp`
+- `Core/Inc/Communications/Packets/OrderPackets.hpp`
+
+These headers are generated artifacts, not hand-maintained source files. They are gitignored and should not be edited or committed.
+
 ## 4. Debug from VSCode
 
 Launch configurations available in `.vscode/launch.json`:

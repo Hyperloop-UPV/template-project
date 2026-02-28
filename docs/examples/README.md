@@ -30,6 +30,8 @@ Build one Ethernet example on a Nucleo:
 ./tools/build-example.sh --example tcpip --preset nucleo-debug-eth --extra-cxx-flags "-DTCPIP_TEST_HOST_IP=192.168.1.9"
 ```
 
+For Ethernet examples, configure the host-side board-link interface with a static IPv4 on the same subnet as the board (default examples expect `192.168.1.9` on the host and `192.168.1.7` on the board).
+
 Flash the latest build:
 
 ```sh
@@ -113,3 +115,4 @@ Before building a packet-dependent example, check its document first and confirm
 - `tools/build-example.sh` now handles named tests such as `usage_fault` as `TEST_USAGE_FAULT`.
 - If an example does not define any `TEST_*` selector, the script no longer injects `TEST_0` by default.
 - `out/build/latest.elf` always points to the most recent MCU build, so flash immediately after building the example you want.
+- `Core/Inc/Communications/Packets/DataPackets.hpp` and `Core/Inc/Communications/Packets/OrderPackets.hpp` are generated packet headers. They are not source-of-truth files and are intentionally gitignored.
