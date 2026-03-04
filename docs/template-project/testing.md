@@ -44,3 +44,23 @@ pre-commit run --all-files
 - `Compile Checks`: builds MCU matrix (no simulator tests)
 - `Run Simulator Tests`: runs tests using `simulator` preset
 - `Format Checks`: validates formatting with `pre-commit`
+
+## 5. TCP/IP Hardware Stress Tests
+
+For Ethernet/socket stress testing on real hardware, see:
+
+- [`docs/template-project/example-tcpip.md`](example-tcpip.md)
+- Per-example quick guides: [`docs/examples/README.md`](../examples/README.md)
+- One-shot Nucleo flow: `./tools/run_example_tcpip_nucleo.sh`
+- Run strict matrix gate: `./tools/example_tcpip_quality_gate.sh`
+- Run long soak: `./tools/example_tcpip_soak.sh`
+- Run multi-hour soak + ratio summary: `./tools/example_tcpip_soak_hours.sh`
+
+## 6. Packet / Order Parser Validation on Hardware
+
+For generated `OrderPackets` / `DataPackets` validation on real hardware, see:
+
+- [`docs/examples/example-packets.md`](../examples/example-packets.md)
+- Host-side checker: `./tools/example_packets_check.py --board-ip 192.168.1.7 --host-bind 192.168.1.9`
+
+`Core/Inc/Communications/Packets/DataPackets.hpp` and `Core/Inc/Communications/Packets/OrderPackets.hpp` are generated from the active `JSON_ADE` schema during build. They are intentionally gitignored and should not be committed.

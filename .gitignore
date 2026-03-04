@@ -97,3 +97,7 @@ tools/*.bin
 
 # Log files
 *.log
+
+# Generated packet headers
+/Core/Inc/Communications/Packets/DataPackets.hpp
+/Core/Inc/Communications/Packets/OrderPackets.hpp
