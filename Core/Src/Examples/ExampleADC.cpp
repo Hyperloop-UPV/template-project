@@ -15,68 +15,28 @@ struct ExampleInput {
     const char* label;
 };
 
-UART::Peripheral& default_terminal_uart() {
-#ifdef NUCLEO
-    return UART::uart3;
-#else
-    return UART::uart2;
-#endif
-}
+constexpr ExampleInput kSingleChannelInput{ST_LIB::PA0, "PA0"};
+constexpr ExampleInput kDualChannelInput0{ST_LIB::PA0, "PA0"};
+constexpr ExampleInput kDualChannelInput1{ST_LIB::PC0, "PC0"};
 
-const char* terminal_hint() {
-#ifdef NUCLEO
-    return "Terminal: ST-LINK VCP over USB (USART3, 115200 8N1)";
-#else
-    return "Terminal: USART2 on PD5/PD6 (115200 8N1)";
-#endif
-}
+constexpr const char* kTerminalHint = "Terminal: ST-LINK VCP over USB (USART3, 115200 8N1)";
+constexpr const char* kSingleChannelWiringHint = "Connect PA0 to GND, 3V3 or a potentiometer.";
+constexpr const char* kDualChannelWiringHint = "Connect PA0 and PC0 to two analog sources.";
 
-[[maybe_unused]] const char* single_channel_wiring_hint() {
-#ifdef NUCLEO
-    return "Connect PA0 to GND, 3V3 or a potentiometer. On NUCLEO-H723ZG this is CN10 pin 29 / "
-           "D32, not Arduino A0.";
-#else
-    return "Connect PA0 to GND, 3V3 or a potentiometer and watch the terminal output.";
-#endif
-}
-
-[[maybe_unused]] const char* dual_channel_wiring_hint() {
-#ifdef NUCLEO
-    return "Connect PA0 and PC0 to two analog sources. PA1 is tied to the Ethernet PHY on "
-           "NUCLEO-H723ZG via SB57 and is not a safe ADC test pin.";
-#else
-    return "Connect PA0 and PA1 to two analog sources to validate multichannel DMA.";
-#endif
-}
-
-void start_terminal(UART::Peripheral& uart) {
+void start_terminal() {
 #ifdef HAL_UART_MODULE_ENABLED
-    if (!UART::set_up_printf(uart)) {
+    if (!UART::set_up_printf(UART::uart3)) {
         ErrorHandler("Unable to set up UART printf for ADC example");
     }
     UART::start();
-#else
-    (void)uart;
 #endif
 }
 
 void print_banner(const char* title, const char* wiring_hint, const char* columns_hint) {
     printf("\n\r=== %s ===\n\r", title);
-    printf("%s\n\r", terminal_hint());
+    printf("%s\n\r", kTerminalHint);
     printf("%s\n\r", wiring_hint);
     printf("Columns: %s\n\r\n\r", columns_hint);
-}
-
-consteval ExampleInput single_channel_input() { return {ST_LIB::PA0, "PA0"}; }
-
-consteval ExampleInput dual_channel_input_0() { return {ST_LIB::PA0, "PA0"}; }
-
-consteval ExampleInput dual_channel_input_1() {
-#ifdef NUCLEO
-    return {ST_LIB::PC0, "PC0"};
-#else
-    return {ST_LIB::PA1, "PA1"};
-#endif
 }
 
 } // namespace
@@ -84,7 +44,7 @@ consteval ExampleInput dual_channel_input_1() {
 #ifdef TEST_0
 
 constinit float adc_value = 0.0f;
-constexpr auto adc_input = single_channel_input();
+constexpr auto adc_input = kSingleChannelInput;
 constexpr auto adc = ADCDomain::ADC(
     adc_input.pin,
     adc_value,
@@ -95,11 +55,11 @@ constexpr auto adc = ADCDomain::ADC(
 int main(void) {
     using ExampleADCBoard = ST_LIB::Board<adc>;
     ExampleADCBoard::init();
-    start_terminal(default_terminal_uart());
+    start_terminal();
 
     auto& adc_instance = ExampleADCBoard::instance_of<adc>();
 
-    print_banner("ADC single-channel example", single_channel_wiring_hint(), "t_ms raw voltage[V]");
+    print_banner("ADC single-channel example", kSingleChannelWiringHint, "t_ms raw voltage[V]");
     printf("Reading input: %s\n\r\n\r", adc_input.label);
 
     uint32_t sample_index = 0;
@@ -126,8 +86,8 @@ int main(void) {
 constinit float adc_input_0_value = 0.0f;
 constinit float adc_input_1_value = 0.0f;
 
-constexpr auto adc_input_0_cfg = dual_channel_input_0();
-constexpr auto adc_input_1_cfg = dual_channel_input_1();
+constexpr auto adc_input_0_cfg = kDualChannelInput0;
+constexpr auto adc_input_1_cfg = kDualChannelInput1;
 
 constexpr auto adc_input_0 = ADCDomain::ADC(
     adc_input_0_cfg.pin,
@@ -146,14 +106,14 @@ constexpr auto adc_input_1 = ADCDomain::ADC(
 int main(void) {
     using ExampleADCBoard = ST_LIB::Board<adc_input_0, adc_input_1>;
     ExampleADCBoard::init();
-    start_terminal(default_terminal_uart());
+    start_terminal();
 
     auto& adc_input_0_instance = ExampleADCBoard::instance_of<adc_input_0>();
     auto& adc_input_1_instance = ExampleADCBoard::instance_of<adc_input_1>();
 
     print_banner(
         "ADC dual-channel example",
-        dual_channel_wiring_hint(),
+        kDualChannelWiringHint,
         "t_ms raw_0 raw_1 v_0[V] v_1[V]"
     );
     printf("Reading inputs: %s and %s\n\r\n\r", adc_input_0_cfg.label, adc_input_1_cfg.label);
