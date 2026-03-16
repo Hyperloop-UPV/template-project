@@ -50,8 +50,14 @@ class VCU {
     }();
 
     static inline constinit auto GeneralStateMachine = []() consteval {
-        auto sm = make_state_machine(DataPackets::general_state::CONNECTING, connecting_state,
-                                     operational_state, fault_state);
+        auto nested =
+            StateMachineHelper::add_nesting(operational_state, OperationalStateMachine);
+
+        auto sm = make_state_machine(DataPackets::general_state::CONNECTING,
+                                     StateMachineHelper::add_nested_machines(nested),
+                                     connecting_state,
+                                     operational_state,
+                                     fault_state);
 
         sm.add_enter_action(
             []() {
@@ -59,8 +65,6 @@ class VCU {
                 Brakes::brake();
             },
             fault_state);
-
-        sm.add_state_machine(OperationalStateMachine, operational_state);
 
         return sm;
     }();
@@ -85,8 +89,6 @@ class VCU {
                                               static_cast<uint8_t>(GeneralStates::FAULT));
         ProtectionManager::add_standard_protections();
         ProtectionManager::initialize();
-
-        Scheduler::start();
 
         Scheduler::register_task(
             16670, +[]() {
