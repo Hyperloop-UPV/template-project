@@ -11,6 +11,39 @@ cmake --build --preset simulator
 ctest --preset simulator-all
 ```
 
+## Hyper CLI
+
+The repo now includes a local helper CLI at `./hyper` for the common hardware flow:
+
+```sh
+./hyper examples list
+./hyper build adc --test 1
+./hyper run adc --test 1 --uart
+./hyper uart
+./hyper doctor
+```
+
+For UART, `hyper` now prefers `tio` and falls back to `cu` if `tio` is not installed.
+
+It wraps the existing repo scripts instead of replacing them, and also exposes a small ST-LIB namespace:
+
+```sh
+./hyper stlib build --preset simulator --run-tests
+./hyper stlib sim-tests
+```
+
+Useful defaults can be pinned with environment variables:
+
+- `HYPER_DEFAULT_PRESET`
+- `HYPER_FLASH_METHOD`
+- `HYPER_UART_PORT`
+- `HYPER_UART_BAUD`
+- `HYPER_UART_TOOL`
+
+Recommended UART setup:
+
+Install `tio` with your package manager, then run `./hyper uart`.
+
 ## Documentation
 
 - Template setup: [`docs/template-project/setup.md`](docs/template-project/setup.md)

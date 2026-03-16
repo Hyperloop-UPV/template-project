@@ -16,12 +16,14 @@ List available examples:
 
 ```sh
 ./tools/build-example.sh --list
+./hyper examples list
 ```
 
 Build one example on a Nucleo:
 
 ```sh
 ./tools/build-example.sh --example adc --preset nucleo-debug --test 0
+./hyper build adc --preset nucleo-debug --test 0
 ```
 
 Build one Ethernet example on a Nucleo:
@@ -36,7 +38,11 @@ Flash the latest build:
 
 ```sh
 STM32_Programmer_CLI -c port=SWD mode=UR -w out/build/latest.elf -v -rst
+./hyper flash
+./hyper run adc --test 0 --uart
 ```
+
+`./hyper uart` prefers `tio` and falls back to `cu`.
 
 ## Documents
 

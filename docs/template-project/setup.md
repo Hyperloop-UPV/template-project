@@ -11,6 +11,7 @@ For MCU build/flash/debug:
 - `STM32CubeCLT`
 - `openocd` or `ST-LINK_gdbserver`
 - `arm-none-eabi-gdb`
+- `tio` (recommended for `./hyper uart`; `cu` remains the fallback when available)
 
 ## 2. Quick Initialization
 
