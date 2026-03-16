@@ -22,8 +22,6 @@ STLIB_ROOT = REPO_ROOT / "deps" / "ST-LIB"
 BUILD_EXAMPLE_SCRIPT = TOOLS_DIR / "build-example.sh"
 PREFLASH_CHECK_SCRIPT = TOOLS_DIR / "preflash_check.py"
 INIT_SCRIPT = TOOLS_DIR / "init.sh"
-TCPIP_NUCLEO_SCRIPT = TOOLS_DIR / "run_example_tcpip_nucleo.sh"
-TCPIP_STRESS_SCRIPT = TOOLS_DIR / "run_example_tcpip_stress.sh"
 STLIB_BUILD_SCRIPT = STLIB_ROOT / "tools" / "build.py"
 STLIB_SIM_TESTS_SCRIPT = STLIB_ROOT / "tools" / "run_sim_tests.sh"
 LATEST_ELF = REPO_ROOT / "out" / "build" / "latest.elf"
@@ -72,6 +70,7 @@ HELP_BANNER = "\n".join(
 HELP_EXAMPLES = """Examples:
   hyper doctor
   hyper build adc --preset nucleo-debug --test 1
+  hyper build main --preset nucleo-debug
   hyper run adc --preset nucleo-debug --test 1 --uart
   hyper uart --list-ports
 """
@@ -735,7 +734,8 @@ def run_build_example(
     jobs: int | None,
 ) -> None:
     ensure_file(BUILD_EXAMPLE_SCRIPT, "build-example helper")
-    selected_test = "none" if no_test else (test or "default")
+    is_main_target = example.strip().lower() in {"main", "default"}
+    selected_test = "none" if no_test or is_main_target else (test or "default")
     print_action(
         "Build",
         example=example,
@@ -1029,24 +1029,8 @@ def handle_stlib_sim_tests(_: argparse.Namespace) -> int:
     return 0
 
 
-def handle_tcpip_nucleo(args: argparse.Namespace) -> int:
-    ensure_file(TCPIP_NUCLEO_SCRIPT, "TCPIP Nucleo helper")
-    print_action("TCPIP Nucleo", script=str(TCPIP_NUCLEO_SCRIPT))
-    run_command([TCPIP_NUCLEO_SCRIPT, *args.forwarded_args])
-    print_note("tcpip nucleo helper completed", status="ok")
-    return 0
-
-
-def handle_tcpip_stress(args: argparse.Namespace) -> int:
-    ensure_file(TCPIP_STRESS_SCRIPT, "TCPIP stress helper")
-    print_action("TCPIP Stress", script=str(TCPIP_STRESS_SCRIPT))
-    run_command([TCPIP_STRESS_SCRIPT, *args.forwarded_args])
-    print_note("tcpip stress helper completed", status="ok")
-    return 0
-
-
 def add_example_build_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("example", help="Example name, e.g. adc or tcpip")
+    parser.add_argument("example", help="Target name, e.g. adc or main")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--test", help="Test selector, e.g. 0, 1 or TEST_1")
     group.add_argument("--no-test", action="store_true", help="Do not inject any TEST_* macro")
@@ -1060,7 +1044,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = HyperArgumentParser(
         prog="hyper",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="Repo-local helper CLI for example builds, flashing, UART and ST-LIB wrappers.",
+        description="Repo-local helper CLI for firmware targets, flashing, UART and ST-LIB wrappers.",
         epilog=HELP_EXAMPLES,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1078,7 +1062,7 @@ def build_parser() -> argparse.ArgumentParser:
     examples_tests_parser.add_argument("example", help="Example name, e.g. adc")
     examples_tests_parser.set_defaults(func=handle_examples_tests)
 
-    build_parser_cmd = subparsers.add_parser("build", help="Build one example")
+    build_parser_cmd = subparsers.add_parser("build", help="Build one firmware target")
     add_example_build_arguments(build_parser_cmd)
     build_parser_cmd.set_defaults(func=handle_build)
 
@@ -1098,7 +1082,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     flash_parser.set_defaults(func=handle_flash)
 
-    run_parser = subparsers.add_parser("run", help="Build then flash one example")
+    run_parser = subparsers.add_parser("run", help="Build then flash one firmware target")
     add_example_build_arguments(run_parser)
     run_parser.add_argument("--elf", type=Path, default=LATEST_ELF, help="ELF image to flash after build")
     run_parser.add_argument(
@@ -1149,17 +1133,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     stlib_tests_parser = stlib_subparsers.add_parser("sim-tests", help="Run ST-LIB simulator tests")
     stlib_tests_parser.set_defaults(func=handle_stlib_sim_tests)
-
-    tcpip_parser = subparsers.add_parser("tcpip", help="Forward to existing TCP/IP helper scripts")
-    tcpip_subparsers = tcpip_parser.add_subparsers(dest="tcpip_command", required=True)
-
-    tcpip_nucleo_parser = tcpip_subparsers.add_parser("nucleo", help="Run tools/run_example_tcpip_nucleo.sh")
-    tcpip_nucleo_parser.add_argument("forwarded_args", nargs=argparse.REMAINDER)
-    tcpip_nucleo_parser.set_defaults(func=handle_tcpip_nucleo)
-
-    tcpip_stress_parser = tcpip_subparsers.add_parser("stress", help="Run tools/run_example_tcpip_stress.sh")
-    tcpip_stress_parser.add_argument("forwarded_args", nargs=argparse.REMAINDER)
-    tcpip_stress_parser.set_defaults(func=handle_tcpip_stress)
 
     return parser
 

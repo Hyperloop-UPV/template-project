@@ -5,12 +5,13 @@ usage() {
     cat <<'EOF'
 Usage: tools/build-example.sh --example <name> [options]
 
-Build one example by enabling BUILD_EXAMPLES and injecting EXAMPLE_* / TEST_* macros.
+Build one firmware target. Examples enable BUILD_EXAMPLES and inject EXAMPLE_* / TEST_* macros.
+The special target 'main' builds Core/Src/main.cpp as the default firmware.
 
 Options:
   -l, --list                  List all available EXAMPLE_* and their TEST_* macros.
       --list-tests <name>     List TEST_* macros for one example (e.g. adc, EXAMPLE_ADC).
-  -e, --example <name>        Example name, e.g. adc or EXAMPLE_ADC.
+  -e, --example <name>        Target name, e.g. adc, EXAMPLE_ADC or main.
   -t, --test <id|macro>       Test selector (default: TEST_0). Accepts 0, 1, TEST_1...
       --no-test               Do not define any TEST_* macro.
   -p, --preset <preset>       CMake preset. Defaults to nucleo-debug.
@@ -23,12 +24,19 @@ Examples:
   tools/build-example.sh --list-tests adc
   tools/build-example.sh --example adc --preset nucleo-debug
   tools/build-example.sh --example adc --test 1 --preset nucleo-debug
+  tools/build-example.sh --example main --preset nucleo-debug
   tools/build-example.sh --example ethernet --test TEST_0 --board-name TEST
 EOF
 }
 
 normalize_example_macro() {
     local input="$1"
+    local normalized_lower
+    normalized_lower="$(printf '%s' "$input" | tr '[:upper:]-' '[:lower:]_')"
+    if [[ "$normalized_lower" == "main" || "$normalized_lower" == "default" ]]; then
+        printf 'MAIN'
+        return
+    fi
     input="${input#EXAMPLE_}"
     input="${input#example_}"
     input="$(printf '%s' "$input" | tr '[:lower:]-' '[:upper:]_')"
@@ -48,11 +56,18 @@ normalize_test_macro() {
 }
 
 collect_examples() {
-    grep -Rho "EXAMPLE_[A-Z0-9_]\+" "${repo_root}/Core/Src/Examples"/*.cpp 2>/dev/null | sort -u
+    {
+        printf 'MAIN\n'
+        grep -Rho "EXAMPLE_[A-Z0-9_]\+" "${repo_root}/Core/Src/Examples"/*.cpp 2>/dev/null
+    } | sort -u
 }
 
 find_example_file() {
     local example_macro="$1"
+    if [[ "$example_macro" == "MAIN" ]]; then
+        printf '%s\n' "${repo_root}/Core/Src/main.cpp"
+        return 0
+    fi
     local file
     for file in "${repo_root}/Core/Src/Examples"/*.cpp; do
         [[ -f "$file" ]] || continue
@@ -66,6 +81,9 @@ find_example_file() {
 
 collect_tests_for_example() {
     local example_macro="$1"
+    if [[ "$example_macro" == "MAIN" ]]; then
+        return 0
+    fi
     local file
     file="$(find_example_file "$example_macro" || true)"
     if [[ -z "$file" ]]; then
@@ -86,6 +104,7 @@ print_examples_table() {
         printf "%-40s tests: %s\n" "$macro" "$tests"
         printf "  file: %s\n" "$file_path"
     done < <(
+        printf "MAIN|<none>|Core/Src/main.cpp\n"
         for file in "${repo_root}/Core/Src/Examples"/*.cpp; do
             [[ -f "$file" ]] || continue
             example_macro="$(grep -Eho "EXAMPLE_[A-Z0-9_]+" "$file" | head -n1 || true)"
@@ -236,12 +255,26 @@ if [[ "$test_explicit" -ne 1 ]]; then
     fi
 fi
 
-define_flags="-D${example_macro}"
-if [[ -n "$test_macro" ]]; then
-    define_flags+=" -D${test_macro}"
+build_examples="ON"
+define_flags=""
+if [[ "$example_macro" != "MAIN" ]]; then
+    define_flags="-D${example_macro}"
+    if [[ -n "$test_macro" ]]; then
+        define_flags+=" -D${test_macro}"
+    fi
+else
+    if [[ -n "$test_macro" ]]; then
+        echo "Target 'main' does not support TEST_* macros." >&2
+        exit 1
+    fi
+    build_examples="OFF"
 fi
 if [[ -n "$extra_cxx_flags" ]]; then
-    define_flags+=" ${extra_cxx_flags}"
+    if [[ -n "$define_flags" ]]; then
+        define_flags+=" ${extra_cxx_flags}"
+    else
+        define_flags="${extra_cxx_flags}"
+    fi
 fi
 
 binary_dir="${repo_root}/out/build/examples/$(sanitize_path_fragment "${preset}")/$(sanitize_path_fragment "${example_macro}")"
@@ -267,7 +300,7 @@ configure_cmd=(
     cmake
     --preset "${preset}"
     -B "${binary_dir}"
-    -DBUILD_EXAMPLES=ON
+    "-DBUILD_EXAMPLES=${build_examples}"
     -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF
     "-DCMAKE_CXX_FLAGS=${define_flags}"
 )
