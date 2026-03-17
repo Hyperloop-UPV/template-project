@@ -89,6 +89,7 @@ class VCU {
                                               static_cast<uint8_t>(GeneralStates::FAULT));
         ProtectionManager::add_standard_protections();
         ProtectionManager::initialize();
+        GeneralStateMachine.start();
 
         Scheduler::register_task(
             16670, +[]() {
