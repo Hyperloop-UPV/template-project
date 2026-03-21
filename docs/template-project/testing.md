@@ -3,22 +3,20 @@
 ## 1. Local Simulator Tests
 
 ```sh
-cmake --preset simulator
-cmake --build --preset simulator
-ctest --preset simulator-all
+./hyper stlib build --preset simulator --run-tests
 ```
 
 Run only ADC tests:
 
 ```sh
+./hyper stlib build --preset simulator
 ctest --preset simulator-adc
 ```
 
 ## 2. Tests with Sanitizers
 
 ```sh
-cmake --preset simulator-asan
-cmake --build --preset simulator-asan
+./hyper stlib build --preset simulator-asan
 ctest --preset simulator-all-asan
 ```
 

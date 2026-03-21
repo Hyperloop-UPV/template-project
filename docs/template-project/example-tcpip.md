@@ -28,19 +28,13 @@ Build with Ethernet enabled and `EXAMPLE_TCPIP` defined.
 Example (board + KSZ8041):
 
 ```sh
-cmake --preset board-debug-eth-ksz8041 \
-  -DBUILD_EXAMPLES=ON \
-  -DCMAKE_CXX_FLAGS='-DEXAMPLE_TCPIP -DTCPIP_TEST_HOST_IP=192.168.1.9'
-cmake --build --preset board-debug-eth-ksz8041
+./hyper build tcpip --preset board-debug-eth-ksz8041 --extra-cxx-flags "-DTCPIP_TEST_HOST_IP=192.168.1.9"
 ```
 
 Example (nucleo + LAN8742):
 
 ```sh
-cmake --preset nucleo-debug-eth \
-  -DBUILD_EXAMPLES=ON \
-  -DCMAKE_CXX_FLAGS='-DEXAMPLE_TCPIP -DTCPIP_TEST_HOST_IP=192.168.1.9'
-cmake --build --preset nucleo-debug-eth
+./hyper build tcpip --preset nucleo-debug-eth --extra-cxx-flags "-DTCPIP_TEST_HOST_IP=192.168.1.9"
 ```
 
 Notes:
@@ -54,7 +48,13 @@ Notes:
 
 ## 2. Flash and run
 
-Flash as usual (`out/build/latest.elf`) and power the board.
+Flash the latest build with:
+
+```sh
+./hyper flash
+```
+
+Then power-cycle or reset the board if needed.
 
 One-shot automation (build + flash + ping + tests):
 

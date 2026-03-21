@@ -7,24 +7,16 @@
 - `nucleo-*`
 - `board-*`
 
-List all presets:
-
-```sh
-cmake --list-presets
-```
-
 ## 2. Build for Simulator
 
 ```sh
-cmake --preset simulator
-cmake --build --preset simulator
+./hyper build main --preset simulator
 ```
 
 With sanitizers:
 
 ```sh
-cmake --preset simulator-asan
-cmake --build --preset simulator-asan
+./hyper build main --preset simulator-asan
 ```
 
 ## 3. Build for MCU
@@ -32,8 +24,7 @@ cmake --build --preset simulator-asan
 Example:
 
 ```sh
-cmake --preset board-debug-eth-ksz8041 -DBOARD_NAME=TEST
-cmake --build --preset board-debug-eth-ksz8041
+./hyper build main --preset board-debug-eth-ksz8041 --board-name TEST
 ```
 
 The build output is copied to:

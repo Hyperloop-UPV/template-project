@@ -17,13 +17,13 @@ It validates:
 Nucleo + on-board LAN8742:
 
 ```sh
-./tools/build-example.sh --example ethernet --preset nucleo-debug-eth --test 0
+./hyper build ethernet --preset nucleo-debug-eth --test 0
 ```
 
 Custom board with KSZ8041:
 
 ```sh
-./tools/build-example.sh --example ethernet --preset board-debug-eth-ksz8041 --test 0
+./hyper build ethernet --preset board-debug-eth-ksz8041 --test 0
 ```
 
 Equivalent macro selection:

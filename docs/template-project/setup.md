@@ -18,7 +18,7 @@ For MCU build/flash/debug:
 From the repository root:
 
 ```sh
-./tools/init.sh
+./hyper init
 ```
 
 This command:
@@ -30,7 +30,7 @@ This command:
 On Windows:
 
 ```bat
-tools\init.bat
+python hyper init
 ```
 
 ## 3. `BOARD_NAME` Configuration (codegen)
@@ -42,7 +42,7 @@ Code generation uses `BOARD_NAME` (CMake cache variable), and the value must exi
 Example:
 
 ```sh
-cmake --preset board-debug -DBOARD_NAME=TEST
+./hyper build main --preset board-debug --board-name TEST
 ```
 
 If not set, the default value is `TEST`.

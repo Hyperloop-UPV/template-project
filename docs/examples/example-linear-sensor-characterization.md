@@ -62,8 +62,7 @@ In practice, this means you need the legacy characterization schema checked out 
 Typical sequence once that schema is restored:
 
 ```sh
-cmake --preset nucleo-debug-eth -DBUILD_EXAMPLES=ON -DCMAKE_CXX_FLAGS='-DEXAMPLE_LINEAR_SENSOR_CHARACTERIZATION'
-cmake --build --preset nucleo-debug-eth
+./hyper build linear_sensor_characterization --preset nucleo-debug-eth --board-name <matching-board>
 ```
 
 ## Intended runtime behavior

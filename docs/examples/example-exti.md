@@ -13,7 +13,7 @@ It validates:
 ## Build
 
 ```sh
-./tools/build-example.sh --example exti --preset nucleo-debug --test 0
+./hyper build exti --preset nucleo-debug --test 0
 ```
 
 Equivalent macro selection:

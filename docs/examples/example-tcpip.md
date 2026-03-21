@@ -20,7 +20,7 @@ It validates:
 Nucleo Ethernet build:
 
 ```sh
-./tools/build-example.sh --example tcpip --preset nucleo-debug-eth --extra-cxx-flags "-DTCPIP_TEST_HOST_IP=192.168.1.9"
+./hyper build tcpip --preset nucleo-debug-eth --extra-cxx-flags "-DTCPIP_TEST_HOST_IP=192.168.1.9"
 ```
 
 Equivalent macro selection:

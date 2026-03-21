@@ -18,7 +18,7 @@ It validates:
 Baseline build:
 
 ```sh
-./tools/build-example.sh --example mpu --preset nucleo-debug --test 0
+./hyper build mpu --preset nucleo-debug --test 0
 ```
 
 Pick any other selector with `--test <id>`.
@@ -26,8 +26,8 @@ Pick any other selector with `--test <id>`.
 Examples:
 
 ```sh
-./tools/build-example.sh --example mpu --preset nucleo-debug --test 11
-./tools/build-example.sh --example mpu --preset nucleo-debug --test 12
+./hyper build mpu --preset nucleo-debug --test 11
+./hyper build mpu --preset nucleo-debug --test 12
 ```
 
 Equivalent macro selection:
@@ -90,7 +90,7 @@ For runtime fault tests:
 - Run:
 
 ```sh
-python3 hard_faullt_analysis.py
+./hyper hardfault-analysis
 ```
 
 ## What a failure usually means

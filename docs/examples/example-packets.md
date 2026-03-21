@@ -58,7 +58,7 @@ If that **ADJ** content changes, regenerate and verify that these generated symb
 Nucleo Ethernet build:
 
 ```sh
-./tools/build-example.sh --example packets --preset nucleo-debug-eth
+./hyper build packets --preset nucleo-debug-eth --board-name TEST
 ```
 
 Equivalent macro selection:

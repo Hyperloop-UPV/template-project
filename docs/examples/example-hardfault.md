@@ -9,7 +9,7 @@ It exists to validate:
 - hard fault capture in flash
 - CFSR/MMFAR/BFAR decoding
 - call stack extraction
-- the offline analyzer in `hard_faullt_analysis.py`
+- the offline analyzer behind `./hyper hardfault-analysis`
 
 ## Available tests
 
@@ -22,19 +22,19 @@ It exists to validate:
 Usage fault example:
 
 ```sh
-./tools/build-example.sh --example hardfault --preset nucleo-debug --test usage_fault
+./hyper build hardfault --preset nucleo-debug --test usage_fault
 ```
 
 Bus fault example:
 
 ```sh
-./tools/build-example.sh --example hardfault --preset nucleo-debug --test bus_fault
+./hyper build hardfault --preset nucleo-debug --test bus_fault
 ```
 
 Memory fault example:
 
 ```sh
-./tools/build-example.sh --example hardfault --preset nucleo-debug --test memory_fault
+./hyper build hardfault --preset nucleo-debug --test memory_fault
 ```
 
 Equivalent macro selection:
@@ -57,7 +57,7 @@ The goal is not for the application to keep running. The goal is to verify that 
 3. Run the analyzer:
 
 ```sh
-python3 hard_faullt_analysis.py
+./hyper hardfault-analysis
 ```
 
 If the script says you must stop debugging first, disconnect the live debugger and run it again.

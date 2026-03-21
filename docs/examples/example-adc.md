@@ -14,7 +14,7 @@ It validates:
 ## Build
 
 ```sh
-./tools/build-example.sh --example adc --preset nucleo-debug --test 0
+./hyper build adc --preset nucleo-debug --test 0
 ```
 
 Equivalent macro selection:
