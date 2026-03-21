@@ -47,7 +47,9 @@ class Schema:
 
         self.measurements: dict[str, dict] = {}
         for measurement_file in self.board["measurements"]:
-            for measurement in json.loads((self.board_dir / measurement_file).read_text()):
+            for measurement in json.loads(
+                (self.board_dir / measurement_file).read_text()
+            ):
                 self.measurements[measurement["id"]] = measurement
 
         self.orders: dict[str, dict] = {}
@@ -56,16 +58,24 @@ class Schema:
         self.order_by_id: dict[int, dict] = {}
 
         for definition_file in self.board["packets"]:
-            for definition in json.loads((self.board_dir / definition_file).read_text()):
+            for definition in json.loads(
+                (self.board_dir / definition_file).read_text()
+            ):
                 table = self.orders if definition["type"] == "order" else self.packets
-                by_id = self.order_by_id if definition["type"] == "order" else self.packet_by_id
+                by_id = (
+                    self.order_by_id
+                    if definition["type"] == "order"
+                    else self.packet_by_id
+                )
                 table[definition["name"]] = definition
                 by_id[definition["id"]] = definition
 
         sockets = json.loads((self.board_dir / "sockets.json").read_text())
         server_sockets = [entry for entry in sockets if entry["type"] == "ServerSocket"]
         client_sockets = [entry for entry in sockets if entry["type"] == "Socket"]
-        datagram_sockets = [entry for entry in sockets if entry["type"] == "DatagramSocket"]
+        datagram_sockets = [
+            entry for entry in sockets if entry["type"] == "DatagramSocket"
+        ]
         if not server_sockets:
             raise ValueError("No ServerSocket defined for TEST board")
         self.tcp_server_port = int(server_sockets[0]["port"])
@@ -131,7 +141,9 @@ def send_chunked(
             time.sleep(rng.uniform(0.0, max_gap_ms / 1000.0))
 
 
-def values_match(schema: Schema, expected: dict[str, object], actual: dict[str, object]) -> bool:
+def values_match(
+    schema: Schema, expected: dict[str, object], actual: dict[str, object]
+) -> bool:
     for field_name, expected_value in expected.items():
         if field_name not in actual:
             return False
@@ -191,7 +203,9 @@ def wait_for_accept(listener: socket.socket, timeout_s: float) -> socket.socket:
     return conn
 
 
-def connect_with_retry(host: str, port: int, timeout_s: float, local_bind: str | None = None) -> socket.socket:
+def connect_with_retry(
+    host: str, port: int, timeout_s: float, local_bind: str | None = None
+) -> socket.socket:
     deadline = time.monotonic() + timeout_s
     last_error: Exception | None = None
     while time.monotonic() < deadline:
@@ -297,7 +311,9 @@ def main() -> int:
         client_conn = wait_for_accept(listener, args.timeout)
         print("[INFO] Board-initiated Socket connected")
 
-        server_conn = connect_with_retry(board_ip, tcp_port, args.timeout, local_bind=args.host_bind)
+        server_conn = connect_with_retry(
+            board_ip, tcp_port, args.timeout, local_bind=args.host_bind
+        )
         print(f"[INFO] Connected to board ServerSocket at {board_ip}:{tcp_port}")
 
         if args.connect_settle > 0:
@@ -352,10 +368,9 @@ def main() -> int:
                 args.timeout,
             )
 
-            server_burst = (
-                schema.encode(schema.orders["set_large_profile"], large_profile)
-                + schema.encode(schema.orders["set_extremes"], extremes)
-            )
+            server_burst = schema.encode(
+                schema.orders["set_large_profile"], large_profile
+            ) + schema.encode(schema.orders["set_extremes"], extremes)
             send_chunked(
                 server_conn,
                 server_burst,
@@ -453,7 +468,9 @@ def main() -> int:
                 args.timeout,
             )
 
-            udp_sock.sendto(schema.encode(schema.packets["udp_probe"], probe), (board_ip, udp_port))
+            udp_sock.sendto(
+                schema.encode(schema.packets["udp_probe"], probe), (board_ip, udp_port)
+            )
             expected_udp_count += 1
             recv_matching_packet(
                 udp_sock,

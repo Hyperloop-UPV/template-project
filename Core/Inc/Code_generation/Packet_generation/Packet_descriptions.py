@@ -191,7 +191,11 @@ class MeasurmentsDescription:
             )
 
         self.name = measurement["name"]
-        self.type = (self._numeric_type_correction(measurement["type"]).replace(" ", "_").replace("-", "_"))
+        self.type = (
+            self._numeric_type_correction(measurement["type"])
+            .replace(" ", "_")
+            .replace("-", "_")
+        )
         if self.type == "enum":
             values = []
             for value in measurement["enumValues"]:
@@ -220,7 +224,7 @@ class MeasurmentsDescription:
         return None
 
     @staticmethod
-    def _numeric_type_correction(type:str):
+    def _numeric_type_correction(type: str):
         if type.startswith("uint") and not type.endswith("_t"):
             type += "_t"
         elif type.startswith("int") and not type.endswith("_t"):

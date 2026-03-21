@@ -153,7 +153,11 @@ class TcpClientSink(threading.Thread):
 
                 conn.settimeout(0.5)
                 parser = PacketStreamParser(
-                    {TCPIP_CLIENT_STREAM_ORDER_ID: struct.calcsize(TCP_CLIENT_STREAM_FMT)}
+                    {
+                        TCPIP_CLIENT_STREAM_ORDER_ID: struct.calcsize(
+                            TCP_CLIENT_STREAM_FMT
+                        )
+                    }
                 )
                 with conn:
                     while not self.stop_event.is_set():
@@ -176,9 +180,9 @@ class TcpClientSink(threading.Thread):
                             break
 
                         for packet_id, packet in parser.feed(data):
-                            if packet_id == TCPIP_CLIENT_STREAM_ORDER_ID and len(packet) == struct.calcsize(
-                                TCP_CLIENT_STREAM_FMT
-                            ):
+                            if packet_id == TCPIP_CLIENT_STREAM_ORDER_ID and len(
+                                packet
+                            ) == struct.calcsize(TCP_CLIENT_STREAM_FMT):
                                 with self.lock:
                                     self.client_stream_packets += 1
                 with self.lock:
@@ -289,8 +293,12 @@ class ExampleTcpIpTester:
                 time.sleep(0.2)
 
         if last_error is None:
-            raise RuntimeError("Cannot accept board TCP client control stream: timed out waiting for connection")
-        raise RuntimeError(f"Cannot accept board TCP client control stream: {last_error}")
+            raise RuntimeError(
+                "Cannot accept board TCP client control stream: timed out waiting for connection"
+            )
+        raise RuntimeError(
+            f"Cannot accept board TCP client control stream: {last_error}"
+        )
 
     def close_control(self) -> None:
         if self.control_socket is not None:
@@ -340,7 +348,9 @@ class ExampleTcpIpTester:
         if bad_checksum:
             checksum ^= 0xA5A5A5A5
 
-        packet = struct.pack(TCP_PAYLOAD_FMT, TCPIP_PAYLOAD_ORDER_ID, sequence, checksum, payload)
+        packet = struct.pack(
+            TCP_PAYLOAD_FMT, TCPIP_PAYLOAD_ORDER_ID, sequence, checksum, payload
+        )
         self._send_control_packet(packet)
 
     def _recv_control_packets(self, timeout_s: float) -> List[Tuple[int, bytes]]:
@@ -404,10 +414,16 @@ class ExampleTcpIpTester:
                 return ResponsePacket(code, value0, value1, value2)
 
         mismatch_note = f" (mismatched={mismatch_count})" if mismatch_count > 0 else ""
-        raise TimeoutError(f"Timeout waiting response code {response_code}{mismatch_note}")
+        raise TimeoutError(
+            f"Timeout waiting response code {response_code}{mismatch_note}"
+        )
 
-    def wait_response(self, response_code: int, timeout_s: float = 4.0) -> ResponsePacket:
-        return self.wait_response_matching(response_code=response_code, timeout_s=timeout_s)
+    def wait_response(
+        self, response_code: int, timeout_s: float = 4.0
+    ) -> ResponsePacket:
+        return self.wait_response_matching(
+            response_code=response_code, timeout_s=timeout_s
+        )
 
     def get_health_pages(self, page_count: int = 6) -> Dict[int, Tuple[int, int, int]]:
         pages: Dict[int, Tuple[int, int, int]] = {}
@@ -456,8 +472,12 @@ class ExampleTcpIpTester:
             expected_value0=nonce,
         )
         if response.value0 != nonce:
-            raise AssertionError(f"Ping nonce mismatch: expected {nonce}, got {response.value0}")
-        return f"nonce={nonce} connections={response.value1} payload_rx={response.value2}"
+            raise AssertionError(
+                f"Ping nonce mismatch: expected {nonce}, got {response.value0}"
+            )
+        return (
+            f"nonce={nonce} connections={response.value1} payload_rx={response.value2}"
+        )
 
     def test_payload_integrity(
         self,
@@ -525,7 +545,9 @@ class ExampleTcpIpTester:
                 break
 
         if not disconnected:
-            raise AssertionError("Control socket did not disconnect after CMD_FORCE_DISCONNECT")
+            raise AssertionError(
+                "Control socket did not disconnect after CMD_FORCE_DISCONNECT"
+            )
 
         self.close_control()
         self.connect_control(timeout_s=8.0)
@@ -543,7 +565,9 @@ class ExampleTcpIpTester:
 
         return "disconnect+reconnect OK"
 
-    def test_server_burst(self, burst_count: int, min_receive_ratio: float = 0.95) -> str:
+    def test_server_burst(
+        self, burst_count: int, min_receive_ratio: float = 0.95
+    ) -> str:
         last_reason = "unknown"
         min_packets_required = int(burst_count * min_receive_ratio)
         if burst_count > 0 and min_packets_required < 1:
@@ -613,7 +637,9 @@ class ExampleTcpIpTester:
                     continue
 
                 if len(data) == struct.calcsize(UDP_STATUS_FMT):
-                    packet_id, ack_sequence, ack_ok, ack_bad = struct.unpack(UDP_STATUS_FMT, data)
+                    packet_id, ack_sequence, ack_ok, ack_bad = struct.unpack(
+                        UDP_STATUS_FMT, data
+                    )
                     if packet_id == TCPIP_UDP_STATUS_PACKET_ID:
                         received_sequences.add(ack_sequence)
                         last_ok = ack_ok
@@ -627,7 +653,9 @@ class ExampleTcpIpTester:
                     continue
 
                 if len(data) == struct.calcsize(UDP_STATUS_FMT):
-                    packet_id, ack_sequence, ack_ok, ack_bad = struct.unpack(UDP_STATUS_FMT, data)
+                    packet_id, ack_sequence, ack_ok, ack_bad = struct.unpack(
+                        UDP_STATUS_FMT, data
+                    )
                     if packet_id == TCPIP_UDP_STATUS_PACKET_ID:
                         received_sequences.add(ack_sequence)
                         last_ok = ack_ok
@@ -655,7 +683,9 @@ def run_test(name: str, fn) -> Tuple[bool, str]:
         return False, f"{exc} ({elapsed:.2f}s)"
 
 
-def print_health_snapshot(tester: ExampleTcpIpTester, label: str, page_count: int) -> None:
+def print_health_snapshot(
+    tester: ExampleTcpIpTester, label: str, page_count: int
+) -> None:
     try:
         pages = tester.get_health_pages(page_count=page_count)
     except Exception as exc:  # noqa: BLE001
@@ -668,21 +698,43 @@ def print_health_snapshot(tester: ExampleTcpIpTester, label: str, page_count: in
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Stress tests for ExampleTCPIP firmware")
+    parser = argparse.ArgumentParser(
+        description="Stress tests for ExampleTCPIP firmware"
+    )
     parser.add_argument("--board-ip", default="192.168.1.7", help="Board IPv4 address")
-    parser.add_argument("--host-bind", default="0.0.0.0", help="Host bind address for TCP/UDP sockets")
-    parser.add_argument("--tcp-server-port", type=int, default=40000, help="Board TCP server port")
-    parser.add_argument("--tcp-client-port", type=int, default=40002, help="Host TCP sink port")
+    parser.add_argument(
+        "--host-bind", default="0.0.0.0", help="Host bind address for TCP/UDP sockets"
+    )
+    parser.add_argument(
+        "--tcp-server-port", type=int, default=40000, help="Board TCP server port"
+    )
+    parser.add_argument(
+        "--tcp-client-port", type=int, default=40002, help="Host TCP sink port"
+    )
     parser.add_argument(
         "--control-mode",
         choices=("auto", "server", "client"),
         default="auto",
         help="Control path mode: try board TCP server, force board TCP server, or force board TCP client stream",
     )
-    parser.add_argument("--udp-local-port", type=int, default=40003, help="Board UDP local port")
-    parser.add_argument("--udp-remote-port", type=int, default=40004, help="Host UDP source port")
-    parser.add_argument("--good-payloads", type=int, default=1200, help="Number of valid TCP payload packets")
-    parser.add_argument("--bad-payloads", type=int, default=200, help="Number of invalid TCP payload packets")
+    parser.add_argument(
+        "--udp-local-port", type=int, default=40003, help="Board UDP local port"
+    )
+    parser.add_argument(
+        "--udp-remote-port", type=int, default=40004, help="Host UDP source port"
+    )
+    parser.add_argument(
+        "--good-payloads",
+        type=int,
+        default=1200,
+        help="Number of valid TCP payload packets",
+    )
+    parser.add_argument(
+        "--bad-payloads",
+        type=int,
+        default=200,
+        help="Number of invalid TCP payload packets",
+    )
     parser.add_argument(
         "--min-payload-rx-ratio",
         type=float,
@@ -701,8 +753,12 @@ def parse_args() -> argparse.Namespace:
         default=800,
         help="Delay in microseconds between payload packets to avoid RX overruns",
     )
-    parser.add_argument("--server-burst", type=int, default=800, help="TCP server burst size request")
-    parser.add_argument("--client-burst", type=int, default=800, help="TCP client burst size request")
+    parser.add_argument(
+        "--server-burst", type=int, default=800, help="TCP server burst size request"
+    )
+    parser.add_argument(
+        "--client-burst", type=int, default=800, help="TCP client burst size request"
+    )
     parser.add_argument(
         "--min-server-burst-ratio",
         type=float,
@@ -715,7 +771,9 @@ def parse_args() -> argparse.Namespace:
         default=0.95,
         help="Minimum accepted ratio received_client_packets / requested_client_burst",
     )
-    parser.add_argument("--udp-count", type=int, default=300, help="UDP probe packet count")
+    parser.add_argument(
+        "--udp-count", type=int, default=300, help="UDP probe packet count"
+    )
     parser.add_argument(
         "--health-pages",
         type=int,
@@ -813,7 +871,10 @@ def main() -> int:
         if tester.active_control_mode == "server":
             base_tests.extend(
                 [
-                    ("forced_disconnect_reconnect", tester.test_forced_disconnect_and_reconnect),
+                    (
+                        "forced_disconnect_reconnect",
+                        tester.test_forced_disconnect_and_reconnect,
+                    ),
                     (
                         "tcp_server_burst",
                         lambda: tester.test_server_burst(
@@ -821,11 +882,16 @@ def main() -> int:
                             min_receive_ratio=args.min_server_burst_ratio,
                         ),
                     ),
-                    ("udp_roundtrip", lambda: tester.test_udp_roundtrip(args.udp_count)),
+                    (
+                        "udp_roundtrip",
+                        lambda: tester.test_udp_roundtrip(args.udp_count),
+                    ),
                 ]
             )
         else:
-            print("[INFO] skipping forced_disconnect_reconnect/tcp_server_burst/udp_roundtrip in client mode")
+            print(
+                "[INFO] skipping forced_disconnect_reconnect/tcp_server_burst/udp_roundtrip in client mode"
+            )
 
         for name, fn in base_tests:
             ok, details = run_test(name, fn)
@@ -833,7 +899,9 @@ def main() -> int:
             state = "PASS" if ok else "FAIL"
             print(f"[{state}] {name}: {details}")
             if not ok and args.health_on_fail:
-                print_health_snapshot(tester, f"after {name}", page_count=args.health_pages)
+                print_health_snapshot(
+                    tester, f"after {name}", page_count=args.health_pages
+                )
 
         if not args.skip_client_stream:
             # Ask board to push data through its Socket() client.
@@ -867,7 +935,9 @@ def main() -> int:
                         page_count=args.health_pages,
                     )
             else:
-                test_results.append(("tcp_client_stream", True, f"non-strict warning: {details}"))
+                test_results.append(
+                    ("tcp_client_stream", True, f"non-strict warning: {details}")
+                )
                 print(f"[WARN] tcp_client_stream: {details}")
                 if args.health_on_fail:
                     print_health_snapshot(
@@ -889,7 +959,10 @@ def main() -> int:
 
     finally:
         try:
-            if tester.active_control_mode == "client" and tester.control_socket is not None:
+            if (
+                tester.active_control_mode == "client"
+                and tester.control_socket is not None
+            ):
                 tester.send_command(CMD_FORCE_CLIENT_RECONNECT, 0, 0)
                 tester.wait_response_matching(
                     CMD_FORCE_CLIENT_RECONNECT,
@@ -980,8 +1053,7 @@ def _run_client_stream_check_via_control(
             pass
 
     raise AssertionError(
-        "tcp_client_stream below threshold in client-control mode: "
-        f"{last_reason}"
+        "tcp_client_stream below threshold in client-control mode: " f"{last_reason}"
     )
 
 
@@ -993,7 +1065,9 @@ def _run_client_stream_check(
     min_receive_ratio: float = 0.95,
 ) -> str:
     if sink is None:
-        raise AssertionError("tcp_client_stream check requires sink in server-control mode")
+        raise AssertionError(
+            "tcp_client_stream check requires sink in server-control mode"
+        )
     min_packets_required = int(requested_burst * min_receive_ratio)
     if requested_burst > 0 and min_packets_required < 1:
         min_packets_required = 1
@@ -1082,7 +1156,9 @@ def _run_client_stream_check(
         connections_seen = connections_seen_start
         deadline = time.monotonic() + measurement_window_s
         while time.monotonic() < deadline:
-            connections_seen, active_connections, current_packets, sink_error, _ = sink.snapshot()
+            connections_seen, active_connections, current_packets, sink_error, _ = (
+                sink.snapshot()
+            )
             if sink_error:
                 last_reason = f"sink error during burst: {sink_error}"
                 break
@@ -1114,7 +1190,11 @@ def _run_client_stream_check(
     overall_delta = packets - function_start_packets
     if overall_delta < 0:
         overall_delta = 0
-    if connections_seen > 0 and overall_delta >= min_packets_required and sink_error is None:
+    if (
+        connections_seen > 0
+        and overall_delta >= min_packets_required
+        and sink_error is None
+    ):
         return (
             f"requested={requested_burst} received={overall_delta} "
             f"min_required={min_packets_required} (aggregate_window_pass)"
