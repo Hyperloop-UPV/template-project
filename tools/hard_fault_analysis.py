@@ -1,12 +1,20 @@
 import subprocess
 import struct
 import os
+from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Optional
 
 HF_FLASH_ADDR = 0x080C0000
 HF_FLASH_ADDR_STRING = "0x080C000"
-ELF_FILE = "out/build/latest.elf"
+
+project_root = Path(__file__).resolve().parent.parent
+ELF_FILE = project_root / "out/build/latest.elf"
+
+if not ELF_FILE.is_file():
+    raise FileNotFoundError(f"No se encontró: {ELF_FILE}")
+
+print(f"Usando ELF: {ELF_FILE}")
 
 CALL_TRACE_MAX_DEPTH = 16
 
