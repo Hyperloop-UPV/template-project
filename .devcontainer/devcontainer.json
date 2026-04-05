@@ -23,5 +23,5 @@
     }
   },
   "containerUser": "root",
-  "updateRemoteUserUID": true
+  "updateRemoteUserUID": false
 }
