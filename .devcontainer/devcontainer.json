@@ -6,8 +6,7 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "runArgs": [
     "--privileged",
-    "-v", "/dev/bus/usb:/dev/bus/usb",
-    "--userns=keep-id"
+    "-v", "/dev/bus/usb:/dev/bus/usb"
   ],
   "postStartCommand": "stlink-server &",
   "containerEnv": {
