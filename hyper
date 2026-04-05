@@ -58,16 +58,15 @@ HELP_BANNER_ROWS = [
     "██║  ██║   ██║   ██║     ███████╗██║  ██║███████╗╚██████╔╝╚██████╔╝██║     ",
     "╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     ",
     "",
-    "██╗   ██╗██████╗ ██╗   ██╗",
-    "██║   ██║██╔══██╗██║   ██║",
-    "██║   ██║██████╔╝██║   ██║",
-    "██║   ██║██╔═══╝ ╚██╗ ██╔╝",
-    "╚██████╔╝██║      ╚████╔╝ ",
-    " ╚═════╝ ╚═╝       ╚═══╝  ",
-    "",
-    "HyperloopUPV",
-    "",
-    "Build • Flash • UART • Diagnostics • ST-LIB",
+    "                                   ▅█╗       ",
+    "██╗   ██╗██████╗ ██╗   ██╗         ██║       ",
+    "██║   ██║██╔══██╗██║   ██║     ▅█╗ ██║       ",
+    "██║   ██║██████╔╝██║   ██║     ██████║   ▅▅▅╖",
+    "██║   ██║██╔═══╝ ╚██╗ ██╔╝     ▀█╔═██║ ▅██▀═╝",
+    "╚██████╔╝██║      ╚████╔╝       ╘╝ █▀▅██▀═╝  ",
+    " ╚═════╝ ╚═╝       ╚═══╝           ▅██▀═╝    ",
+    "                                   █▀═╝      ",
+    "                                   ╘╝        ",
     "",
 ]
 HELP_BANNER_WIDTH = 82
@@ -1314,12 +1313,154 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def show_horizontal_menu(options: list[tuple[str, str]], prompt: str = "Select") -> int | None:
+    """Display a horizontal menu navigable with arrow keys, with bold selection and description for selected item."""
+    import sys
+    import tty
+    import termios
+    
+    selected = 0
+    
+    while True:
+        # Build the menu line with just option names
+        menu_parts = []
+        for i, (option, description) in enumerate(options):
+            if i == selected:
+                # Bold the selected option
+                menu_parts.append(style(option, '1'))
+            else:
+                # Regular option
+                menu_parts.append(option)
+        
+        menu_display = "  •  ".join(menu_parts)
+        
+        # Get the description for the selected item
+        selected_description = options[selected][1]
+        
+        # Build the full display line
+        full_display = f"{prompt} {menu_display}  →  {selected_description}"
+        
+        # Clear the line and show the menu using ANSI escape codes
+        sys.stdout.write("\033[2K\r" + full_display)
+        sys.stdout.flush()
+        
+        # Get keyboard input
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+            
+            if ch == '\x1b':  # Escape sequence
+                next1 = sys.stdin.read(1)
+                if next1 == '[':
+                    next2 = sys.stdin.read(1)
+                    if next2 == 'C':  # Right arrow
+                        selected = (selected + 1) % len(options)
+                    elif next2 == 'D':  # Left arrow
+                        selected = (selected - 1) % len(options)
+            elif ch == '\r' or ch == '\n':  # Enter
+                # Move to beginning of line and then to next line
+                sys.stdout.write("\r\n")
+                sys.stdout.flush()
+                return selected
+            elif ch == 'q' or ch == '\x03':  # q or Ctrl+C
+                # Move to beginning of line and then to next line
+                sys.stdout.write("\r\n")
+                sys.stdout.flush()
+                return None
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+
+def show_interactive_menu() -> list[str] | None:
+    """Show an interactive menu for command selection."""
+    menu_items = [
+        ("init", "Initialize tools and Python environment"),
+        ("build", "Build a firmware target"),
+        ("flash", "Flash an ELF image onto the board"),
+        ("run", "Build then flash a firmware target"),
+        ("uart", "Open the board UART terminal"),
+        ("examples", "Inspect available examples"),
+        ("doctor", "Show tool and serial-port availability"),
+        ("hardfault-analysis", "Analyze hard fault dump"),
+        ("stlib", "Run ST-LIB helper flows"),
+    ]
+
+    print(HELP_BANNER)
+    # Show interactive horizontal menu where the banner tagline was
+    idx = show_horizontal_menu(menu_items, "")
+
+    if idx is None:
+        return None
+
+    command = menu_items[idx][0]
+
+    # Handle subcommands that need additional input
+    if command == "build":
+        example = input("Enter example name (e.g., 'adc', 'main'): ").strip()
+        if not example:
+            return None
+        return ["build", example]
+
+    elif command == "run":
+        example = input("Enter example name (e.g., 'adc', 'main'): ").strip()
+        if not example:
+            return None
+        return ["run", example]
+
+    elif command == "flash":
+        methods = [("auto", "Auto-detect flash tool"), ("stm32prog", "Use STM32_Programmer_CLI"), ("openocd", "Use OpenOCD")]
+        method_idx = show_horizontal_menu(methods, "")
+        if method_idx is None:
+            return None
+        return ["flash", "--method", methods[method_idx][0]]
+
+    elif command == "uart":
+        actions = [("Open terminal", "Interactive UART session"), ("List ports", "Show available serial ports")]
+        action_idx = show_horizontal_menu(actions, "")
+        if action_idx is None:
+            return None
+        if action_idx == 1:
+            return ["uart", "--list-ports"]
+        return ["uart"]
+
+    elif command == "examples":
+        actions = [("List examples", "Show available examples"), ("Show tests for example", "List tests for specific example")]
+        action_idx = show_horizontal_menu(actions, "")
+        if action_idx is None:
+            return None
+        if action_idx == 1:
+            example = input("Enter example name: ").strip()
+            if not example:
+                return None
+            return ["examples", "tests", example]
+        return ["examples", "list"]
+
+    elif command == "stlib":
+        actions = [("Build", "Build ST-LIB"), ("Run simulator tests", "Run ST-LIB simulator tests")]
+        action_idx = show_horizontal_menu(actions, "")
+        if action_idx is None:
+            return None
+        if action_idx == 1:
+            return ["stlib", "sim-tests"]
+        return ["stlib", "build"]
+
+    return [command]
+
+
 def main() -> int:
     parser = build_parser()
     if len(sys.argv) == 1:
-        print(parser.format_help(), end="")
-        return 0
-    args = parser.parse_args()
+        # Try to show interactive menu
+        cmd_args = show_interactive_menu()
+        if cmd_args is None:
+            # User cancelled, exit silently
+            return 0
+        args = parser.parse_args(cmd_args)
+    else:
+        args = parser.parse_args()
+
     try:
         return args.func(args)
     except subprocess.CalledProcessError as exc:
