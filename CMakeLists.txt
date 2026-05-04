@@ -10,7 +10,8 @@ if(BOARD_NAME STREQUAL "")
   message(FATAL_ERROR "BOARD_NAME cannot be empty")
 endif()
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
-set(LD_SCRIPT ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
+set(LD_SCRIPT_INPUT ${STLIB_DIR}/LinkerScript.ld)
+set(LD_SCRIPT ${CMAKE_BINARY_DIR}/LinkerScript.ld)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -30,6 +31,8 @@ endif()
 option(USE_ETHERNET "Enable ethernet peripheral" OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
 option(BUILD_EXAMPLES "Build Core/Src/Examples sources" OFF)
+option(ITCM_BUILD "Build code in ITCM (fast execution, no wait states)" ON)
+set(ITCM_SIZE "256K" CACHE STRING "ITCM size: 64K, 128K, 192K, or 256K")
 option(USE_CCACHE "Use ccache if available" ON)
 if(NOT DEFINED ENABLE_LTO)
   if(CMAKE_CROSSCOMPILING)
@@ -49,9 +52,26 @@ if(USE_CCACHE)
   endif()
 endif()
 
+# Preprocess linker script through C preprocessor
+add_custom_command(
+  OUTPUT ${LD_SCRIPT}
+  COMMAND ${CMAKE_C_COMPILER} -E -P -x c 
+    -D__ITCM_BUILD=$<IF:$<BOOL:${ITCM_BUILD}>,1,0>
+    -D__ITCM_SIZE=${ITCM_SIZE}
+    -o ${LD_SCRIPT} ${LD_SCRIPT_INPUT}
+  DEPENDS ${LD_SCRIPT_INPUT}
+  COMMENT "Preprocessing linker script (ITCM_BUILD=${ITCM_BUILD}, ITCM_SIZE=${ITCM_SIZE})"
+)
+
+add_custom_target(preprocess_linker_script
+  DEPENDS ${LD_SCRIPT}
+)
+
 message(STATUS "Template project: CMAKE_CROSSCOMPILING = ${CMAKE_CROSSCOMPILING}")
 message(STATUS "Template project: USE_ETHERNET         = ${USE_ETHERNET}")
 message(STATUS "Template project: TARGET_NUCLEO        = ${TARGET_NUCLEO}")
+message(STATUS "Template project: ITCM_BUILD           = ${ITCM_BUILD}")
+message(STATUS "Template project: ITCM_SIZE            = ${ITCM_SIZE}")
 message(STATUS "Template project: BOARD_NAME           = ${BOARD_NAME}")
 
 add_subdirectory(${STLIB_DIR})
@@ -142,8 +162,10 @@ if(CMAKE_CROSSCOMPILING)
     ${SOURCE_H}
     ${SOURCE_HPP}
 
-    $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/startup_stm32h723zgtx.s>
+    $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/StartupCode.s>
   )
+
+  add_dependencies(${EXECUTABLE} preprocess_linker_script)
 
   target_link_libraries(${EXECUTABLE} PRIVATE
     ${STLIB_LIBRARY}
@@ -161,6 +183,8 @@ if(CMAKE_CROSSCOMPILING)
     $<$<BOOL:${USE_ETHERNET}>:STLIB_ETH>
     $<IF:$<BOOL:${TARGET_NUCLEO}>,NUCLEO,BOARD>
     $<IF:$<BOOL:${TARGET_NUCLEO}>,HSE_VALUE=8000000,HSE_VALUE=25000000>
+    __ITCM_BUILD=$<IF:$<BOOL:${ITCM_BUILD}>,1,0>
+    __ITCM_SIZE=${ITCM_SIZE}
   )
 
   target_compile_options(${EXECUTABLE} PRIVATE

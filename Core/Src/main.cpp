@@ -9,8 +9,12 @@ constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PF13);
 using MainBoard = ST_LIB::Board<led>;
 
 #ifndef EXAMPLE_SELECTED
-int main(void) {
+
+void BoardInit() {
     MainBoard::init();
+}
+
+int main(void) {
 
     auto& led_instance = MainBoard::instance_of<led>();
 
