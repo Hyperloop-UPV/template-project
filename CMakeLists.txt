@@ -171,6 +171,7 @@ if(CMAKE_CROSSCOMPILING)
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-specs=nosys.specs>
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:RelWithDebInfo>:-g>
+    $<$<NOT:$<CONFIG:Debug>>:-flto>
     -ffunction-sections
     -fdata-sections
     -fno-exceptions
