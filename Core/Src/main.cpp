@@ -5,8 +5,7 @@
 using namespace ST_LIB;
 
 constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PF13);
-
-using MainBoard = ST_LIB::Board<led>;
+using MainBoard = ST_LIB::Board<ST_LIB::FaultPolicyNoMachine<nullptr>,led>;
 
 #ifndef EXAMPLE_SELECTED
 int main(void) {
@@ -22,7 +21,7 @@ int main(void) {
 #endif
 
 extern "C" void Error_Handler(void) {
-    ErrorHandler("HAL error handler triggered");
+    PANIC("HAL error handler triggered");
     while (1) {
     }
 }
