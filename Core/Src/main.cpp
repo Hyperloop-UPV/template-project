@@ -1,12 +1,13 @@
 #include "main.h"
 
 #include "ST-LIB.hpp"
+#include "ErrorHandler/ErrorHandler.hpp"
 
 using namespace ST_LIB;
 
 constexpr auto led = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PF13);
 
-using MainBoard = ST_LIB::Board<led>;
+using MainBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, led>;
 
 #ifndef EXAMPLE_SELECTED
 int main(void) {
