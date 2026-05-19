@@ -1,9 +1,9 @@
 #ifdef EXAMPLE_LINEAR_SENSOR_CHARACTERIZATION
 
+#include "ErrorHandler/ErrorHandler.hpp"
 #include "Communications/Packets/DataPackets.hpp"
 #include "Communications/Packets/OrderPackets.hpp"
 #include "ST-LIB.hpp"
-#include "ErrorHandler/ErrorHandler.hpp"
 #include "main.h"
 
 using namespace ST_LIB;
