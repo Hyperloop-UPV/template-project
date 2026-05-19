@@ -26,7 +26,7 @@ constexpr const char* kDualChannelWiringHint = "Connect PA0 and PC0 to two analo
 void start_terminal() {
 #ifdef HAL_UART_MODULE_ENABLED
     if (!UART::set_up_printf(UART::uart3)) {
-        ErrorHandler("Unable to set up UART printf for ADC example");
+        PANIC("Unable to set up UART printf for ADC example");
     }
     UART::start();
 #endif

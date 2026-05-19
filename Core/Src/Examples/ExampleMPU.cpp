@@ -537,7 +537,7 @@ int main(void) {
 #endif
 
 void Error_Handler(void) {
-    ErrorHandler("HAL error handler triggered");
+    PANIC("HAL error handler triggered");
     while (1) {
     }
 }
