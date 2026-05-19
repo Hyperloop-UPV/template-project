@@ -3,6 +3,7 @@
 #include "Communications/Packets/DataPackets.hpp"
 #include "Communications/Packets/OrderPackets.hpp"
 #include "ST-LIB.hpp"
+#include "ErrorHandler/ErrorHandler.hpp"
 #include "main.h"
 
 using namespace ST_LIB;
@@ -47,7 +48,7 @@ constexpr auto eth = EthernetDomain::Ethernet(
 #else
 #error "No PHY selected for Ethernet pinset selection"
 #endif
-using ExampleEthernetBoard = ST_LIB::Board<eth, sensor>;
+using ExampleEthernetBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, eth, sensor>;
 
 extern "C" void Error_Handler(void) {
     ErrorHandler("HAL error handler triggered");
@@ -91,7 +92,6 @@ int main(void) {
     Hard_fault_check();
     ExampleEthernetBoard::init();
 
-    Scheduler::start();
     // Comms
     OrderPackets::characterize_init(real_value);
     DataPackets::characterization_init(slope, offset);
