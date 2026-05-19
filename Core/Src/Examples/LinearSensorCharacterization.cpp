@@ -50,12 +50,6 @@ constexpr auto eth = EthernetDomain::Ethernet(
 #endif
 using ExampleEthernetBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, eth, sensor>;
 
-extern "C" void Error_Handler(void) {
-    PANIC("HAL error handler triggered");
-    while (1) {
-    }
-}
-
 void characterize(float raw, double read) {
     // Incremental OLS accumulators for y = slope * x + offset.
     static uint64_t sample_count{0};
