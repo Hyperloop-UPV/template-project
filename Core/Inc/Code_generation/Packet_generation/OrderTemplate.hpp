@@ -21,7 +21,7 @@ public:
     {% endfor %}
 
     OrderPackets() = default;
-
+#ifdef STLIB_ETH
     {% for packet in packets -%}
     inline static HeapOrder *{{packet.name}}_order{nullptr};
     {% endfor %}
@@ -39,9 +39,10 @@ public:
     {% for socket in ServerSockets -%}
     inline static {{socket.type}} *{{socket.name}}{nullptr};
     {% endfor %}
-
+#endif
     static void start()
     {
+#ifdef STLIB_ETH
         {% for packet in packets -%}
         if ({{packet.name}}_order == nullptr) {
             PANIC("Order {{packet.name}} not initialized");
@@ -54,6 +55,7 @@ public:
         {% for socket in Sockets -%}
         {{socket.name}} = new Socket("{{socket.board_ip}}",{{socket.local_port}},"{{socket.remote_ip}}",{{socket.remote_port}});
         {% endfor %}
+#endif
     }
 
 private:
