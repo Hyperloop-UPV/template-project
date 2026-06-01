@@ -26,7 +26,7 @@ constexpr const char* kDualChannelWiringHint = "Connect PA0 and PC0 to two analo
 void start_terminal() {
 #ifdef HAL_UART_MODULE_ENABLED
     if (!UART::set_up_printf(UART::uart3)) {
-        ErrorHandler("Unable to set up UART printf for ADC example");
+        FAULT("Unable to set up UART printf for ADC example");
     }
     UART::start();
 #endif
@@ -51,13 +51,16 @@ constexpr auto adc = ADCDomain::ADC(
     ADCDomain::Resolution::BITS_12,
     ADCDomain::SampleTime::CYCLES_8_5
 );
+using ExampleADCBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, adc>;
+
+auto& adc_instance = ExampleADCBoard::instance_of<adc>();
+
+extern "C" void BoardInit() {
+    ExampleADCBoard::init();
+}
 
 int main(void) {
-    using ExampleADCBoard = ST_LIB::Board<adc>;
-    ExampleADCBoard::init();
     start_terminal();
-
-    auto& adc_instance = ExampleADCBoard::instance_of<adc>();
 
     print_banner("ADC single-channel example", kSingleChannelWiringHint, "t_ms raw voltage[V]");
     printf("Reading input: %s\n\r\n\r", adc_input.label);
@@ -103,13 +106,18 @@ constexpr auto adc_input_1 = ADCDomain::ADC(
     ADCDomain::SampleTime::CYCLES_8_5
 );
 
+using ExampleADCBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, adc_input_0, adc_input_1>;
+
+extern "C" void BoardInit() {
+    ExampleADCBoard::init();
+}
+
+auto& adc_input_0_instance = ExampleADCBoard::instance_of<adc_input_0>();
+auto& adc_input_1_instance = ExampleADCBoard::instance_of<adc_input_1>();
+
 int main(void) {
-    using ExampleADCBoard = ST_LIB::Board<adc_input_0, adc_input_1>;
     ExampleADCBoard::init();
     start_terminal();
-
-    auto& adc_input_0_instance = ExampleADCBoard::instance_of<adc_input_0>();
-    auto& adc_input_1_instance = ExampleADCBoard::instance_of<adc_input_1>();
 
     print_banner(
         "ADC dual-channel example",

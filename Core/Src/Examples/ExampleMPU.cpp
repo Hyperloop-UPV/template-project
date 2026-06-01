@@ -3,151 +3,338 @@
 #include "main.h"
 #include "ST-LIB.hpp"
 
+using namespace ST_LIB;
+
+inline void mpu_assert(bool condition) {
+    if (!condition) {
+        __BKPT(0);
+        while (1) {}
+    }
+}
+
+template<typename T>
+bool in_range(const T& var, const char& start, const char& end) {
+    auto addr = reinterpret_cast<uintptr_t>(&var);
+    return addr >= reinterpret_cast<uintptr_t>(&start) && addr < reinterpret_cast<uintptr_t>(&end);
+}
+
+template<typename T>
+bool in_range_cached(const T& var, const char& nc_end, const char& base, const char& size) {
+    auto addr = reinterpret_cast<uintptr_t>(&var);
+    return addr >= reinterpret_cast<uintptr_t>(&nc_end)
+        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+}
+
+template<typename T>
+bool in_range_from(const T& var, const char& base, const char& size) {
+    auto addr = reinterpret_cast<uintptr_t>(&var);
+    return addr >= reinterpret_cast<uintptr_t>(&base)
+        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+}
+
+inline bool ptr_in_range(const volatile void* ptr, const char& start, const char& end) {
+    auto addr = reinterpret_cast<uintptr_t>(ptr);
+    return addr >= reinterpret_cast<uintptr_t>(&start) && addr < reinterpret_cast<uintptr_t>(&end);
+}
+
+inline bool ptr_in_range_cached(const volatile void* ptr, const char& nc_end, const char& base, const char& size) {
+    auto addr = reinterpret_cast<uintptr_t>(ptr);
+    return addr >= reinterpret_cast<uintptr_t>(&nc_end)
+        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+}
+
+inline bool ptr_in_range_from(const volatile void* ptr, const char& base, const char& size) {
+    auto addr = reinterpret_cast<uintptr_t>(ptr);
+    return addr >= reinterpret_cast<uintptr_t>(&base)
+        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+}
+
 #ifdef TEST_0
 // No Buffers requested
-int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<>;
+using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
+extern "C" void BoardInit() {
     myBoard::init();
-
+}
+int main(void) {
     while (1) {
-        STLIB::update();
     }
 }
 #endif
 
 #ifdef TEST_1
-// Basic test with a buffer in D2
-constexpr auto my_uint32_t = MPUDomain::Buffer<uint32_t>();
+// Basic test with buffers in all domains
+D1_NC_BSS uint32_t my_d1_nc_bss_1;
+D1_NC_BSS uint8_t my_d1_nc_bss_2;
+D1_C_BSS uint32_t my_d1_c_bss_1;
+D1_C_BSS uint8_t my_d1_c_bss_2;
+D2_NC_BSS uint32_t my_d2_nc_bss_1;
+D2_NC_BSS uint8_t my_d2_nc_bss_2;
+D2_C_BSS uint32_t my_d2_c_bss_1;
+D2_C_BSS uint8_t my_d2_c_bss_2;
+D3_NC_BSS uint32_t my_d3_nc_bss_1;
+D3_NC_BSS uint8_t my_d3_nc_bss_2;
+D3_C_BSS uint32_t my_d3_c_bss_1;
+D3_C_BSS uint8_t my_d3_c_bss_2;
+
+D1_NC_DATA uint32_t my_d1_nc_data_1{40};
+D1_NC_DATA uint8_t my_d1_nc_data_2{41};
+D1_C_DATA uint32_t my_d1_c_data_1{42};
+D1_C_DATA uint8_t my_d1_c_data_2{43};
+D2_NC_DATA uint32_t my_d2_nc_data_1{44};
+D2_NC_DATA uint8_t my_d2_nc_data_2{45};
+D2_C_DATA uint32_t my_d2_c_data_1{46};
+D2_C_DATA uint8_t my_d2_c_data_2{47};
+D3_NC_DATA uint32_t my_d3_nc_data_1{48};
+D3_NC_DATA uint8_t my_d3_nc_data_2{49};
+D3_C_DATA uint32_t my_d3_c_data_1{50};
+D3_C_DATA uint8_t my_d3_c_data_2{51};
+
+D1_NC_RODATA uint32_t my_d1_nc_rodata_1{100};
+D1_NC_RODATA uint8_t my_d1_nc_rodata_2{101};
+D1_C_RODATA uint32_t my_d1_c_rodata_1{102};
+D1_C_RODATA uint8_t my_d1_c_rodata_2{103};
+D2_NC_RODATA uint32_t my_d2_nc_rodata_1{104};
+D2_NC_RODATA uint8_t my_d2_nc_rodata_2{105};
+D2_C_RODATA uint32_t my_d2_c_rodata_1{106};
+D2_C_RODATA uint8_t my_d2_c_rodata_2{107};
+D3_NC_RODATA uint32_t my_d3_nc_rodata_1{108};
+D3_NC_RODATA uint8_t my_d3_nc_rodata_2{109};
+D3_C_RODATA uint32_t my_d3_c_rodata_1{110};
+D3_C_RODATA uint8_t my_d3_c_rodata_2{111};
+
+DTCM_RODATA uint32_t my_dtcm_rodata_1{112};
+DTCM_RODATA uint8_t my_dtcm_rodata_2{113};
+
+// INLINE variants
+D1_NC_DATA_INLINE(my_inline_d1_nc_data_1) uint32_t my_inline_d1_nc_data_1{200};
+D1_NC_BSS_INLINE(my_inline_d1_nc_bss_1) uint32_t my_inline_d1_nc_bss_1;
+D1_NC_RODATA_INLINE(my_inline_d1_nc_rodata_1) uint32_t my_inline_d1_nc_rodata_1{201};
+D1_C_DATA_INLINE(my_inline_d1_c_data_1) uint32_t my_inline_d1_c_data_1{202};
+D1_C_BSS_INLINE(my_inline_d1_c_bss_1) uint32_t my_inline_d1_c_bss_1;
+D1_C_RODATA_INLINE(my_inline_d1_c_rodata_1) uint32_t my_inline_d1_c_rodata_1{203};
+D2_NC_DATA_INLINE(my_inline_d2_nc_data_1) uint32_t my_inline_d2_nc_data_1{204};
+D2_NC_BSS_INLINE(my_inline_d2_nc_bss_1) uint32_t my_inline_d2_nc_bss_1;
+D2_NC_RODATA_INLINE(my_inline_d2_nc_rodata_1) uint32_t my_inline_d2_nc_rodata_1{205};
+D2_C_DATA_INLINE(my_inline_d2_c_data_1) uint32_t my_inline_d2_c_data_1{206};
+D2_C_BSS_INLINE(my_inline_d2_c_bss_1) uint32_t my_inline_d2_c_bss_1;
+D2_C_RODATA_INLINE(my_inline_d2_c_rodata_1) uint32_t my_inline_d2_c_rodata_1{207};
+D3_NC_DATA_INLINE(my_inline_d3_nc_data_1) uint32_t my_inline_d3_nc_data_1{208};
+D3_NC_BSS_INLINE(my_inline_d3_nc_bss_1) uint32_t my_inline_d3_nc_bss_1;
+D3_NC_RODATA_INLINE(my_inline_d3_nc_rodata_1) uint32_t my_inline_d3_nc_rodata_1{209};
+D3_C_DATA_INLINE(my_inline_d3_c_data_1) uint32_t my_inline_d3_c_data_1{210};
+D3_C_BSS_INLINE(my_inline_d3_c_bss_1) uint32_t my_inline_d3_c_bss_1;
+D3_C_RODATA_INLINE(my_inline_d3_c_rodata_1) uint32_t my_inline_d3_c_rodata_1{211};
+DTCM_RODATA_INLINE(my_inline_dtcm_rodata_1) uint32_t my_inline_dtcm_rodata_1{212};
+
+RAM_CODE void ram_code_func() {
+    __NOP();
+}
+RAM_CODE_INLINE(my_inline_ram_code_func) void my_inline_ram_code_func() {
+    __NOP();
+}
+
+using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
+extern "C" void BoardInit() {
+    myBoard::init();
+}
+
+const uint32_t my_rodata{301};
 
 int main(void) {
-    STLIB::start();
+    mpu_assert(in_range(my_d1_nc_bss_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range(my_d1_nc_bss_2, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range_cached(my_d1_c_bss_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_d1_c_bss_2, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range(my_d2_nc_bss_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range(my_d2_nc_bss_2, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range_cached(my_d2_c_bss_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_d2_c_bss_2, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range(my_d3_nc_bss_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_d3_nc_bss_2, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range_cached(my_d3_c_bss_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_d3_c_bss_2, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
 
-    using myBoard = ST_LIB::Board<my_uint32_t>;
-    myBoard::init();
+    mpu_assert(in_range(my_d1_nc_data_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range(my_d1_nc_data_2, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range_cached(my_d1_c_data_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_d1_c_data_2, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range(my_d2_nc_data_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range(my_d2_nc_data_2, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range_cached(my_d2_c_data_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_d2_c_data_2, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range(my_d3_nc_data_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_d3_nc_data_2, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range_cached(my_d3_c_data_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_d3_c_data_2, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
 
-    [[maybe_unused]] auto my_buffer =
-        myBoard::instance_of<my_uint32_t>().template as<my_uint32_t>();
+    mpu_assert(in_range(my_d1_nc_rodata_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range(my_d1_nc_rodata_2, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range_cached(my_d1_c_rodata_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_d1_c_rodata_2, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range(my_d2_nc_rodata_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range(my_d2_nc_rodata_2, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range_cached(my_d2_c_rodata_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_d2_c_rodata_2, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range(my_d3_nc_rodata_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_d3_nc_rodata_2, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range_cached(my_d3_c_rodata_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_d3_c_rodata_2, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
 
-    while (1) {
-        STLIB::update();
-    }
+    mpu_assert(in_range_from(my_dtcm_rodata_1, _dtcm_base, _dtcm_size));
+    mpu_assert(in_range_from(my_dtcm_rodata_2, _dtcm_base, _dtcm_size));
+
+    // INLINE variants
+    mpu_assert(in_range(my_inline_d1_nc_data_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range(my_inline_d1_nc_bss_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range(my_inline_d1_nc_rodata_1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range_cached(my_inline_d1_c_data_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_inline_d1_c_bss_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_inline_d1_c_rodata_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range(my_inline_d2_nc_data_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range(my_inline_d2_nc_bss_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range(my_inline_d2_nc_rodata_1, _ram_d2_nc_start, _ram_d2_nc_end));
+    mpu_assert(in_range_cached(my_inline_d2_c_data_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_inline_d2_c_bss_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_inline_d2_c_rodata_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range(my_inline_d3_nc_data_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_inline_d3_nc_bss_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_inline_d3_nc_rodata_1, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range_cached(my_inline_d3_c_data_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_inline_d3_c_bss_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_inline_d3_c_rodata_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_from(my_inline_dtcm_rodata_1, _dtcm_base, _dtcm_size));
+
+    // RAM_CODE functions in ITCM
+    mpu_assert(reinterpret_cast<uintptr_t>(&ram_code_func) >= reinterpret_cast<uintptr_t>(&_itcm_base)
+        && reinterpret_cast<uintptr_t>(&ram_code_func) < reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size));
+    mpu_assert(reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) >= reinterpret_cast<uintptr_t>(&_itcm_base)
+        && reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) < reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size));
+
+    // .data in DTCM
+    uint32_t my_data{300};
+    mpu_assert(in_range_from(my_data, _dtcm_base, _dtcm_size));
+
+    // .bss in DTCM
+    static uint32_t my_bss;
+    mpu_assert(in_range_from(my_bss, _dtcm_base, _dtcm_size));
+
+    // stack in DTCM
+    uint32_t my_stack;
+    mpu_assert(in_range_from(my_stack, _dtcm_base, _dtcm_size));
+
+    // .rodata in FLASH
+    mpu_assert(in_range_from(my_rodata, _flash_base, _flash_size));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_2
-// Basic test with a buffer in D1
-constexpr auto my_uint32_t =
-    MPUDomain::Buffer<uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D1);
+// MPUDomain buffers in D1 and D3 non-cached
+constexpr auto my_d1 = MPUDomain::Buffer<volatile uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D1);
+constexpr auto my_d3 = MPUDomain::Buffer<volatile uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D3);
 
 int main(void) {
-    STLIB::start();
 
-    using myBoard = ST_LIB::Board<my_uint32_t>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_d1, my_d3>;
     myBoard::init();
 
-    [[maybe_unused]] auto my_buffer = MPUDomain::as<myBoard, my_uint32_t>();
+    auto* d1 = MPUDomain::as<myBoard, my_d1>();
+    auto* d3 = MPUDomain::as<myBoard, my_d3>();
 
-    while (1) {
-        STLIB::update();
-    }
+    mpu_assert(ptr_in_range(d1, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range(d3, _ram_d3_nc_start, _ram_d3_nc_end));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_3
-// Basic test with a buffer in D3
-constexpr auto my_buff =
-    MPUDomain::Buffer<uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D3);
+// POD struct type buffer
+struct MPUStruct { uint8_t a; float b; char c[10]; };
+constexpr auto my_struct = MPUDomain::Buffer<volatile MPUStruct>();
 
 int main(void) {
-    STLIB::start();
 
-    using myBoard = ST_LIB::Board<my_buff>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_struct>;
     myBoard::init();
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    while (1) {
-        STLIB::update();
-    }
+    auto* s = MPUDomain::as<myBoard, my_struct>();
+    mpu_assert(ptr_in_range(s, _ram_d1_nc_start, _ram_d1_nc_end));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_4
 // Fail test (too much memory requested)
-constexpr auto my_buff = MPUDomain::Buffer<uint32_t[100000]>(
+constexpr auto my_buff = MPUDomain::Buffer<volatile uint32_t[100000]>(
     MPUDomain::MemoryType::NonCached,
     MPUDomain::MemoryDomain::D3
 );
 
 int main(void) {
-    using myBoard = ST_LIB::Board<my_buff>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_buff>;
     myBoard::init();
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    STLIB::start();
 
-    while (1) {
-        STLIB::update();
-    }
+    while (1);
 }
 #endif
 
 #ifdef TEST_5
 // Cannot request any type of buffer other than the one defined
-constexpr auto my_buff = MPUDomain::Buffer<uint32_t>();
+constexpr auto my_buff = MPUDomain::Buffer<volatile uint32_t>();
 
 int main(void) {
-    STLIB::start();
 
-    using myBoard = ST_LIB::Board<my_buff>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_buff>;
     myBoard::init();
 
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<uint32_t>();
+    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<uint32_t>(); // Wrong type, should be as<my_buff>()
 
-    while (1) {
-        STLIB::update();
-    }
+    while (1);
 }
 #endif
 
 #ifdef TEST_6
-// Ask for non-cached and cached memory on the same domain
-constexpr auto my_buff = MPUDomain::Buffer<uint32_t[100]>();
-constexpr auto my_buff2 = MPUDomain::Buffer<uint32_t[200]>(MPUDomain::MemoryType::Cached);
+// Non-cached and cached memory on the same domain
+// TODO (doesn't work)
+constexpr auto my_nc = MPUDomain::Buffer<volatile uint32_t[100]>();
+constexpr auto my_c = MPUDomain::Buffer<uint32_t[200]>(MPUDomain::MemoryType::Cached);
 
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<my_buff, my_buff2>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_nc, my_c>;
     myBoard::init();
 
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
-    [[maybe_unused]] auto my_buffer2 = myBoard::instance_of<my_buff2>().template as<my_buff2>();
+    auto* nc = MPUDomain::as<myBoard, my_nc>();
+    auto* c = MPUDomain::as<myBoard, my_c>();
 
-    while (1) {
-        STLIB::update();
-    }
+    mpu_assert(ptr_in_range(nc, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range_cached(c, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_7
-// Ask for different alignment buffers
-constexpr auto my_buff = MPUDomain::Buffer<uint8_t[100]>();
-constexpr auto my_buff2 = MPUDomain::Buffer<uint32_t[200]>();
+// Different alignment buffers
+constexpr auto my_8 = MPUDomain::Buffer<volatile uint8_t[100]>();
+constexpr auto my_32 = MPUDomain::Buffer<volatile uint32_t[200]>();
 
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<my_buff, my_buff2>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_8, my_32>;
     myBoard::init();
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
-    [[maybe_unused]] auto my_buffer2 = myBoard::instance_of<my_buff2>().template as<my_buff2>();
 
-    while (1) {
-        STLIB::update();
-    }
+    auto* a8 = MPUDomain::as<myBoard, my_8>();
+    auto* a32 = MPUDomain::as<myBoard, my_32>();
+
+    mpu_assert(ptr_in_range(a8, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range(a32, _ram_d1_nc_start, _ram_d1_nc_end));
+
+    while (1);
 }
 #endif
 
@@ -156,16 +343,12 @@ int main(void) {
 constexpr auto my_buff = MPUDomain::Buffer<std::vector<int>>();
 
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<my_buff>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_buff>;
     myBoard::init();
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    while (1) {
-        STLIB::update();
-    }
+    while (1);
 }
 #endif
 
@@ -273,9 +456,9 @@ constexpr auto my_buff99 = MPUDomain::Buffer<uint8_t>();
 constexpr auto my_buff100 = MPUDomain::Buffer<uint8_t>();
 constexpr auto my_buff101 = MPUDomain::Buffer<uint8_t>();
 int main(void) {
-    STLIB::start();
 
     using myBoard = ST_LIB::Board<
+        ST_LIB::DefaultFaultPolicy,
         my_buff,
         my_buff2,
         my_buff3,
@@ -381,41 +564,16 @@ int main(void) {
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    while (1) {
-        STLIB::update();
-    }
+    while (1);
 }
 #endif
 
 #ifdef TEST_10
-// Request a struct type (also works with objects and such, as long as they are POD)
-struct MyStruct {
-    uint8_t a;
-    float b;
-    char c[10];
-};
-constexpr auto my_buff = MPUDomain::Buffer<MyStruct>();
-
-int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<my_buff>;
-    myBoard::init();
-
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
-
-    while (1) {
-        STLIB::update();
-    }
-}
-#endif
-
-#ifdef TEST_11
 // Mix types of different alignments and sizes (stress test)
-constexpr auto my_buff = MPUDomain::Buffer<uint8_t[3]>();
-constexpr auto my_buff2 = MPUDomain::Buffer<uint16_t[5]>();
-constexpr auto my_buff3 = MPUDomain::Buffer<uint32_t>();
-constexpr auto my_buff4 = MPUDomain::Buffer<uint64_t[2]>();
+constexpr auto my_buff = MPUDomain::Buffer<volatile uint8_t[3]>();
+constexpr auto my_buff2 = MPUDomain::Buffer<volatile uint16_t[5]>();
+constexpr auto my_buff3 = MPUDomain::Buffer<volatile uint32_t>();
+constexpr auto my_buff4 = MPUDomain::Buffer<volatile uint64_t[2]>();
 constexpr auto my_buff5 = MPUDomain::Buffer<uint32_t>(MPUDomain::MemoryType::Cached);
 constexpr auto my_buff6 = MPUDomain::Buffer<uint8_t[7]>(MPUDomain::MemoryType::Cached);
 constexpr auto my_buff7 = MPUDomain::Buffer<uint16_t>(MPUDomain::MemoryType::Cached);
@@ -430,37 +588,44 @@ D3_NC uint32_t my_global_var3;
 D3_NC uint8_t my_global_array[50];
 
 int main(void) {
-    STLIB::start();
 
     using myBoard = ST_LIB::
-        Board<my_buff, my_buff2, my_buff3, my_buff4, my_buff5, my_buff6, my_buff7, my_buff8>;
+        Board<ST_LIB::DefaultFaultPolicy, my_buff, my_buff2, my_buff3, my_buff4, my_buff5, my_buff6, my_buff7, my_buff8>;
     myBoard::init();
 
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
-    [[maybe_unused]] auto my_buffer2 = myBoard::instance_of<my_buff2>().template as<my_buff2>();
-    [[maybe_unused]] auto my_buffer3 = myBoard::instance_of<my_buff3>().template as<my_buff3>();
-    [[maybe_unused]] auto my_buffer4 = myBoard::instance_of<my_buff4>().template as<my_buff4>();
-    [[maybe_unused]] auto my_buffer5 = myBoard::instance_of<my_buff5>().template as<my_buff5>();
-    [[maybe_unused]] auto my_buffer6 = myBoard::instance_of<my_buff6>().template as<my_buff6>();
-    [[maybe_unused]] auto my_buffer7 = myBoard::instance_of<my_buff7>().template as<my_buff7>();
-    [[maybe_unused]] auto my_buffer8 = myBoard::instance_of<my_buff8>().template as<my_buff8>();
-    [[maybe_unused]] auto* global_var1 = &my_global_var;
-    [[maybe_unused]] auto* global_var2 = &my_global_var2;
-    [[maybe_unused]] auto* global_var3 = &my_global_var3;
-    [[maybe_unused]] auto* global_array = &my_global_array;
+    auto* my_buffer = MPUDomain::as<myBoard, my_buff>();
+    auto* my_buffer2 = MPUDomain::as<myBoard, my_buff2>();
+    auto* my_buffer3 = MPUDomain::as<myBoard, my_buff3>();
+    auto* my_buffer4 = MPUDomain::as<myBoard, my_buff4>();
+    auto* my_buffer5 = MPUDomain::as<myBoard, my_buff5>();
+    auto* my_buffer6 = MPUDomain::as<myBoard, my_buff6>();
+    auto* my_buffer7 = MPUDomain::as<myBoard, my_buff7>();
+    auto* my_buffer8 = MPUDomain::as<myBoard, my_buff8>();
 
-    while (1) {
-        STLIB::update();
-    }
+    // Buffer placement checks
+    mpu_assert(ptr_in_range(my_buffer, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range(my_buffer2, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range(my_buffer3, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range(my_buffer4, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(ptr_in_range_cached(my_buffer5, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(ptr_in_range_cached(my_buffer6, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(ptr_in_range_cached(my_buffer7, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(ptr_in_range_cached(my_buffer8, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+
+    // Manual macro variable placement
+    mpu_assert(in_range(my_global_var, _ram_d1_nc_start, _ram_d1_nc_end));
+    mpu_assert(in_range_cached(my_global_var2, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range(my_global_var3, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_global_array, _ram_d3_nc_start, _ram_d3_nc_end));
+
+    while (1);
 }
 #endif
 
-#ifdef TEST_12
-// Dereference a pointer to a non-accessible memory region (should compile fine, runtime error)
+#ifdef TEST_11
+// Dereference a pointer to a non-accessible memory region (should compile fine, hardfault at runtime)
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
     myBoard::init();
 
     volatile uint32_t* invalid_ptr =
@@ -468,85 +633,58 @@ int main(void) {
 
     [[maybe_unused]] uint32_t value = *invalid_ptr; // Dereference
 
-    while (1) {
-        STLIB::update();
+    while (1);
+}
+#endif
+
+#ifdef TEST_12
+// Try construct method
+struct MyStruct {
+    uint8_t a; float b; char c[10];
+    MyStruct(uint8_t aa, float bb) : a(aa), b(bb) {
+        for (int i = 0; i < 10; ++i) c[i] = 'A' + i;
     }
+};
+constexpr auto my_buff = MPUDomain::Buffer<volatile MyStruct>();
+
+int main(void) {
+
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_buff>;
+    myBoard::init();
+
+    auto& s = MPUDomain::construct<myBoard, my_buff>(42, 3.14f);
+    mpu_assert(ptr_in_range(&s, _ram_d1_nc_start, _ram_d1_nc_end));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_13
-// Try construct method
-struct MyStruct {
-    uint8_t a;
-    float b;
-    char c[10];
-    MyStruct(uint8_t aa, float bb) : a(aa), b(bb) {
-        for (int i = 0; i < 10; ++i)
-            c[i] = 'A' + i;
-    }
-};
-constexpr auto my_buff = MPUDomain::Buffer<MyStruct>();
-
+// Test legacy MPUManager compatibility
+D3_NC uint8_t my_legacy_buffer[256];
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<my_buff>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
     myBoard::init();
-    [[maybe_unused]] auto my_buffer =
-        myBoard::instance_of<my_buff>().template construct<my_buff>(42, 3.14f);
 
-    while (1) {
-        STLIB::update();
-    }
+    auto* legacy = MPUManager::allocate_non_cached_memory(256);
+    mpu_assert(ptr_in_range(legacy, _ram_d3_nc_start, _ram_d3_nc_end));
+    mpu_assert(in_range(my_legacy_buffer, _ram_d3_nc_start, _ram_d3_nc_end));
+
+    while (1);
 }
 #endif
 
 #ifdef TEST_14
-// Test legacy MPUManager compatibility
-D3_NC uint8_t my_legacy_buffer[256];
+// Dereference a nullptr for read/write (should compile fine, hardfault at runtime)
 int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<>;
-    myBoard::init();
-
-    [[maybe_unused]] auto my_buff = MPUManager::allocate_non_cached_memory(256);
-    [[maybe_unused]] auto legacy_buffer_ptr = my_legacy_buffer;
-
-    while (1) {
-        STLIB::update();
-    }
-}
-#endif
-
-#ifdef TEST_15
-// Dereference a nullptr for read/write (should compile fine, runtime error)
-int main(void) {
-    STLIB::start();
-
-    using myBoard = ST_LIB::Board<>;
+    using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
     myBoard::init();
     volatile uint32_t* invalid_ptr = nullptr; // Null pointer
 
     [[maybe_unused]] uint32_t value = *invalid_ptr; // Dereference
 
-    while (1) {
-        STLIB::update();
-    }
+    while (1);
 }
 #endif
-
-void Error_Handler(void) {
-    ErrorHandler("HAL error handler triggered");
-    while (1) {
-    }
-}
-
-extern "C" {
-void assert_failed(uint8_t* file, uint32_t line) {
-    while (1) {
-    }
-}
-}
 
 #endif
