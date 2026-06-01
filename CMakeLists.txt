@@ -55,7 +55,7 @@ endif()
 # Preprocess linker script through C preprocessor
 add_custom_command(
   OUTPUT ${LD_SCRIPT}
-  COMMAND ${CMAKE_C_COMPILER} -E -P -x c 
+  COMMAND ${CMAKE_C_COMPILER} -E -P -x c
     -D__ITCM_BUILD=$<IF:$<BOOL:${ITCM_BUILD}>,1,0>
     -D__ITCM_SIZE=${ITCM_SIZE}
     -o ${LD_SCRIPT} ${LD_SCRIPT_INPUT}

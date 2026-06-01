@@ -55,9 +55,7 @@ using ExampleADCBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, adc>;
 
 auto& adc_instance = ExampleADCBoard::instance_of<adc>();
 
-extern "C" void BoardInit() {
-    ExampleADCBoard::init();
-}
+extern "C" void BoardInit() { ExampleADCBoard::init(); }
 
 int main(void) {
     start_terminal();
@@ -108,9 +106,7 @@ constexpr auto adc_input_1 = ADCDomain::ADC(
 
 using ExampleADCBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, adc_input_0, adc_input_1>;
 
-extern "C" void BoardInit() {
-    ExampleADCBoard::init();
-}
+extern "C" void BoardInit() { ExampleADCBoard::init(); }
 
 auto& adc_input_0_instance = ExampleADCBoard::instance_of<adc_input_0>();
 auto& adc_input_1_instance = ExampleADCBoard::instance_of<adc_input_1>();

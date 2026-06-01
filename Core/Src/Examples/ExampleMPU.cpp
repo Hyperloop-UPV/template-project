@@ -8,28 +8,27 @@ using namespace ST_LIB;
 inline void mpu_assert(bool condition) {
     if (!condition) {
         __BKPT(0);
-        while (1) {}
+        while (1) {
+        }
     }
 }
 
-template<typename T>
-bool in_range(const T& var, const char& start, const char& end) {
+template <typename T> bool in_range(const T& var, const char& start, const char& end) {
     auto addr = reinterpret_cast<uintptr_t>(&var);
     return addr >= reinterpret_cast<uintptr_t>(&start) && addr < reinterpret_cast<uintptr_t>(&end);
 }
 
-template<typename T>
+template <typename T>
 bool in_range_cached(const T& var, const char& nc_end, const char& base, const char& size) {
     auto addr = reinterpret_cast<uintptr_t>(&var);
-    return addr >= reinterpret_cast<uintptr_t>(&nc_end)
-        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+    return addr >= reinterpret_cast<uintptr_t>(&nc_end) &&
+           addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
 }
 
-template<typename T>
-bool in_range_from(const T& var, const char& base, const char& size) {
+template <typename T> bool in_range_from(const T& var, const char& base, const char& size) {
     auto addr = reinterpret_cast<uintptr_t>(&var);
-    return addr >= reinterpret_cast<uintptr_t>(&base)
-        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+    return addr >= reinterpret_cast<uintptr_t>(&base) &&
+           addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
 }
 
 inline bool ptr_in_range(const volatile void* ptr, const char& start, const char& end) {
@@ -37,24 +36,27 @@ inline bool ptr_in_range(const volatile void* ptr, const char& start, const char
     return addr >= reinterpret_cast<uintptr_t>(&start) && addr < reinterpret_cast<uintptr_t>(&end);
 }
 
-inline bool ptr_in_range_cached(const volatile void* ptr, const char& nc_end, const char& base, const char& size) {
+inline bool ptr_in_range_cached(
+    const volatile void* ptr,
+    const char& nc_end,
+    const char& base,
+    const char& size
+) {
     auto addr = reinterpret_cast<uintptr_t>(ptr);
-    return addr >= reinterpret_cast<uintptr_t>(&nc_end)
-        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+    return addr >= reinterpret_cast<uintptr_t>(&nc_end) &&
+           addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
 }
 
 inline bool ptr_in_range_from(const volatile void* ptr, const char& base, const char& size) {
     auto addr = reinterpret_cast<uintptr_t>(ptr);
-    return addr >= reinterpret_cast<uintptr_t>(&base)
-        && addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
+    return addr >= reinterpret_cast<uintptr_t>(&base) &&
+           addr < reinterpret_cast<uintptr_t>(&base) + reinterpret_cast<uintptr_t>(&size);
 }
 
 #ifdef TEST_0
 // No Buffers requested
 using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
-extern "C" void BoardInit() {
-    myBoard::init();
-}
+extern "C" void BoardInit() { myBoard::init(); }
 int main(void) {
     while (1) {
     }
@@ -126,17 +128,11 @@ D3_C_BSS_INLINE(my_inline_d3_c_bss_1) uint32_t my_inline_d3_c_bss_1;
 D3_C_RODATA_INLINE(my_inline_d3_c_rodata_1) uint32_t my_inline_d3_c_rodata_1{211};
 DTCM_RODATA_INLINE(my_inline_dtcm_rodata_1) uint32_t my_inline_dtcm_rodata_1{212};
 
-RAM_CODE void ram_code_func() {
-    __NOP();
-}
-RAM_CODE_INLINE(my_inline_ram_code_func) void my_inline_ram_code_func() {
-    __NOP();
-}
+RAM_CODE void ram_code_func() { __NOP(); }
+RAM_CODE_INLINE(my_inline_ram_code_func) void my_inline_ram_code_func() { __NOP(); }
 
 using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
-extern "C" void BoardInit() {
-    myBoard::init();
-}
+extern "C" void BoardInit() { myBoard::init(); }
 
 const uint32_t my_rodata{301};
 
@@ -189,26 +185,36 @@ int main(void) {
     mpu_assert(in_range(my_inline_d1_nc_rodata_1, _ram_d1_nc_start, _ram_d1_nc_end));
     mpu_assert(in_range_cached(my_inline_d1_c_data_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
     mpu_assert(in_range_cached(my_inline_d1_c_bss_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
-    mpu_assert(in_range_cached(my_inline_d1_c_rodata_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
+    mpu_assert(in_range_cached(my_inline_d1_c_rodata_1, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size)
+    );
     mpu_assert(in_range(my_inline_d2_nc_data_1, _ram_d2_nc_start, _ram_d2_nc_end));
     mpu_assert(in_range(my_inline_d2_nc_bss_1, _ram_d2_nc_start, _ram_d2_nc_end));
     mpu_assert(in_range(my_inline_d2_nc_rodata_1, _ram_d2_nc_start, _ram_d2_nc_end));
     mpu_assert(in_range_cached(my_inline_d2_c_data_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
     mpu_assert(in_range_cached(my_inline_d2_c_bss_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
-    mpu_assert(in_range_cached(my_inline_d2_c_rodata_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size));
+    mpu_assert(in_range_cached(my_inline_d2_c_rodata_1, _ram_d2_nc_end, _ram_d2_base, _ram_d2_size)
+    );
     mpu_assert(in_range(my_inline_d3_nc_data_1, _ram_d3_nc_start, _ram_d3_nc_end));
     mpu_assert(in_range(my_inline_d3_nc_bss_1, _ram_d3_nc_start, _ram_d3_nc_end));
     mpu_assert(in_range(my_inline_d3_nc_rodata_1, _ram_d3_nc_start, _ram_d3_nc_end));
     mpu_assert(in_range_cached(my_inline_d3_c_data_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
     mpu_assert(in_range_cached(my_inline_d3_c_bss_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
-    mpu_assert(in_range_cached(my_inline_d3_c_rodata_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size));
+    mpu_assert(in_range_cached(my_inline_d3_c_rodata_1, _ram_d3_nc_end, _ram_d3_base, _ram_d3_size)
+    );
     mpu_assert(in_range_from(my_inline_dtcm_rodata_1, _dtcm_base, _dtcm_size));
 
     // RAM_CODE functions in ITCM
-    mpu_assert(reinterpret_cast<uintptr_t>(&ram_code_func) >= reinterpret_cast<uintptr_t>(&_itcm_base)
-        && reinterpret_cast<uintptr_t>(&ram_code_func) < reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size));
-    mpu_assert(reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) >= reinterpret_cast<uintptr_t>(&_itcm_base)
-        && reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) < reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size));
+    mpu_assert(
+        reinterpret_cast<uintptr_t>(&ram_code_func) >= reinterpret_cast<uintptr_t>(&_itcm_base) &&
+        reinterpret_cast<uintptr_t>(&ram_code_func) <
+            reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size)
+    );
+    mpu_assert(
+        reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) >=
+            reinterpret_cast<uintptr_t>(&_itcm_base) &&
+        reinterpret_cast<uintptr_t>(&my_inline_ram_code_func) <
+            reinterpret_cast<uintptr_t>(&_itcm_base) + reinterpret_cast<uintptr_t>(&_itcm_size)
+    );
 
     // .data in DTCM
     uint32_t my_data{300};
@@ -225,14 +231,21 @@ int main(void) {
     // .rodata in FLASH
     mpu_assert(in_range_from(my_rodata, _flash_base, _flash_size));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
 #ifdef TEST_2
 // MPUDomain buffers in D1 and D3 non-cached
-constexpr auto my_d1 = MPUDomain::Buffer<volatile uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D1);
-constexpr auto my_d3 = MPUDomain::Buffer<volatile uint32_t>(MPUDomain::MemoryType::NonCached, MPUDomain::MemoryDomain::D3);
+constexpr auto my_d1 = MPUDomain::Buffer<volatile uint32_t>(
+    MPUDomain::MemoryType::NonCached,
+    MPUDomain::MemoryDomain::D1
+);
+constexpr auto my_d3 = MPUDomain::Buffer<volatile uint32_t>(
+    MPUDomain::MemoryType::NonCached,
+    MPUDomain::MemoryDomain::D3
+);
 
 int main(void) {
 
@@ -245,13 +258,18 @@ int main(void) {
     mpu_assert(ptr_in_range(d1, _ram_d1_nc_start, _ram_d1_nc_end));
     mpu_assert(ptr_in_range(d3, _ram_d3_nc_start, _ram_d3_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
 #ifdef TEST_3
 // POD struct type buffer
-struct MPUStruct { uint8_t a; float b; char c[10]; };
+struct MPUStruct {
+    uint8_t a;
+    float b;
+    char c[10];
+};
 constexpr auto my_struct = MPUDomain::Buffer<volatile MPUStruct>();
 
 int main(void) {
@@ -262,7 +280,8 @@ int main(void) {
     auto* s = MPUDomain::as<myBoard, my_struct>();
     mpu_assert(ptr_in_range(s, _ram_d1_nc_start, _ram_d1_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -279,8 +298,8 @@ int main(void) {
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -293,9 +312,11 @@ int main(void) {
     using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, my_buff>;
     myBoard::init();
 
-    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<uint32_t>(); // Wrong type, should be as<my_buff>()
+    [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<uint32_t>(
+    ); // Wrong type, should be as<my_buff>()
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -315,7 +336,8 @@ int main(void) {
     mpu_assert(ptr_in_range(nc, _ram_d1_nc_start, _ram_d1_nc_end));
     mpu_assert(ptr_in_range_cached(c, _ram_d1_nc_end, _ram_d1_base, _ram_d1_size));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -334,7 +356,8 @@ int main(void) {
     mpu_assert(ptr_in_range(a8, _ram_d1_nc_start, _ram_d1_nc_end));
     mpu_assert(ptr_in_range(a32, _ram_d1_nc_start, _ram_d1_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -348,7 +371,8 @@ int main(void) {
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -564,7 +588,8 @@ int main(void) {
 
     [[maybe_unused]] auto my_buffer = myBoard::instance_of<my_buff>().template as<my_buff>();
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -589,8 +614,16 @@ D3_NC uint8_t my_global_array[50];
 
 int main(void) {
 
-    using myBoard = ST_LIB::
-        Board<ST_LIB::DefaultFaultPolicy, my_buff, my_buff2, my_buff3, my_buff4, my_buff5, my_buff6, my_buff7, my_buff8>;
+    using myBoard = ST_LIB::Board<
+        ST_LIB::DefaultFaultPolicy,
+        my_buff,
+        my_buff2,
+        my_buff3,
+        my_buff4,
+        my_buff5,
+        my_buff6,
+        my_buff7,
+        my_buff8>;
     myBoard::init();
 
     auto* my_buffer = MPUDomain::as<myBoard, my_buff>();
@@ -618,12 +651,14 @@ int main(void) {
     mpu_assert(in_range(my_global_var3, _ram_d3_nc_start, _ram_d3_nc_end));
     mpu_assert(in_range(my_global_array, _ram_d3_nc_start, _ram_d3_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
 #ifdef TEST_11
-// Dereference a pointer to a non-accessible memory region (should compile fine, hardfault at runtime)
+// Dereference a pointer to a non-accessible memory region (should compile fine, hardfault at
+// runtime)
 int main(void) {
     using myBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy>;
     myBoard::init();
@@ -633,16 +668,20 @@ int main(void) {
 
     [[maybe_unused]] uint32_t value = *invalid_ptr; // Dereference
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
 #ifdef TEST_12
 // Try construct method
 struct MyStruct {
-    uint8_t a; float b; char c[10];
+    uint8_t a;
+    float b;
+    char c[10];
     MyStruct(uint8_t aa, float bb) : a(aa), b(bb) {
-        for (int i = 0; i < 10; ++i) c[i] = 'A' + i;
+        for (int i = 0; i < 10; ++i)
+            c[i] = 'A' + i;
     }
 };
 constexpr auto my_buff = MPUDomain::Buffer<volatile MyStruct>();
@@ -655,7 +694,8 @@ int main(void) {
     auto& s = MPUDomain::construct<myBoard, my_buff>(42, 3.14f);
     mpu_assert(ptr_in_range(&s, _ram_d1_nc_start, _ram_d1_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -670,7 +710,8 @@ int main(void) {
     mpu_assert(ptr_in_range(legacy, _ram_d3_nc_start, _ram_d3_nc_end));
     mpu_assert(in_range(my_legacy_buffer, _ram_d3_nc_start, _ram_d3_nc_end));
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
@@ -683,7 +724,8 @@ int main(void) {
 
     [[maybe_unused]] uint32_t value = *invalid_ptr; // Dereference
 
-    while (1);
+    while (1)
+        ;
 }
 #endif
 

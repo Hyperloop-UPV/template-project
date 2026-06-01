@@ -11,10 +11,7 @@ constexpr auto led_req = ST_LIB::DigitalOutputDomain::DigitalOutput(ST_LIB::PB0)
 using MainBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, led_req>;
 auto& led_instance = MainBoard::instance_of<led_req>();
 
-
-extern "C" void BoardInit() {
-    MainBoard::init();
-}
+extern "C" void BoardInit() { MainBoard::init(); }
 
 int main(void) {
     while (1) {

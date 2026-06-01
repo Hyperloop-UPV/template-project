@@ -17,16 +17,13 @@ using MainBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, led_req, exti_req>;
 
 auto led_instance = MainBoard::instance_of<led_req>();
 
-void toggle_led() {
-    led_instance.toggle();
-}
+void toggle_led() { led_instance.toggle(); }
 
-extern "C" void BoardInit() {
-    MainBoard::init();
-}
+extern "C" void BoardInit() { MainBoard::init(); }
 
 int main(void) {
-    while (1);
+    while (1)
+        ;
 }
 #endif
 
