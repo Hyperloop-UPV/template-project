@@ -5,7 +5,7 @@ include(CTest)
 enable_testing()
 
 set(EXECUTABLE ${PROJECT_NAME}.elf)
-set(BOARD_NAME "TEST" CACHE STRING "Board key from Core/Inc/Code_generation/JSON_ADE/boards.json")
+set(BOARD_NAME "VCU" CACHE STRING "Board key from Core/Inc/Code_generation/JSON_ADE/boards.json" FORCE)
 if(BOARD_NAME STREQUAL "")
   message(FATAL_ERROR "BOARD_NAME cannot be empty")
 endif()

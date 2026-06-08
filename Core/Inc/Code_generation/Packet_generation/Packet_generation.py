@@ -19,8 +19,7 @@ def Generate_PacketDescription(JSONpath: str, board: str):
             board_instance = BoardDescription(board, b, JSONpath)
             globals()[board] = board_instance
     else:
-        print(f"Board {board} not found, exiting...")
-        sys.exit()
+        raise Exception(f"Board {board} not found, exiting...")
 
     return boards_name
 

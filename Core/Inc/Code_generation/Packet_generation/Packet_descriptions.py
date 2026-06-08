@@ -10,6 +10,7 @@ class BoardDescription:
 
         # Load backend IP from general_info.json
         backend_ip = "0.0.0.0"
+        backend_ports = {}
         try:
             with open(JSONpath + "/general_info.json") as f:
                 general_info = json.load(f)
@@ -18,14 +19,17 @@ class BoardDescription:
                     and "backend" in general_info["addresses"]
                 ):
                     backend_ip = general_info["addresses"]["backend"]
+                if "ports" in general_info:
+                    backend_ports = general_info["ports"]
         except Exception as e:
-            print(f"Warning: Could not load backend IP from general_info.json: {e}")
+            msg = f"Warning: Could not load backend IP and ports from general_info.json: {e}"
+            raise Exception(msg)
 
         # Sockets:
         try:
             with open(JSONpath + "/boards/" + name + "/sockets.json") as s:
                 socks = json.load(s)
-                self.sockets = self.SocketsDescription(socks, self.ip, backend_ip)
+                self.sockets = self.SocketsDescription(socks, self.ip, backend_ip, backend_ports)
         except Exception as e:
             raise Exception(f"Error in file {JSONpath}/boards/{name}/sockets.json: {e}")
         # Packets:
@@ -95,13 +99,14 @@ class BoardDescription:
         return fixed_packets
 
     class SocketsDescription:
-        def __init__(self, sockets: list, board_ip: str, backend_ip: str):
+        def __init__(self, sockets: list, board_ip: str, backend_ip: str, backend_ports: dict):
             self.allSockets = []
             self.ServerSockets = []
             self.Sockets = []
             self.DatagramSockets = []
             self.board_ip = board_ip
             self.backend_ip = backend_ip
+            self.backend_ports = backend_ports
             for sock in sockets:
                 name = sock["name"].replace(" ", "_").replace("-", "_")
                 sock_type = sock["type"]
@@ -120,6 +125,11 @@ class BoardDescription:
                     remote_ip = sock["remote_ip"]
                     if remote_ip == "backend":
                         remote_ip = self.backend_ip
+                    
+                    remote_port = sock["remote_port"]
+                    if remote_port == "backend":
+                        remote_port = self.backend_ports.get("TCP_SERVER", remote_port)
+
                     self.Sockets.append(
                         {
                             "name": name,
@@ -127,22 +137,32 @@ class BoardDescription:
                             "board_ip": self.board_ip,
                             "local_port": sock["local_port"],
                             "remote_ip": remote_ip,
-                            "remote_port": sock["remote_port"],
+                            "remote_port": remote_port,
                         }
                     )
                 elif sock_type == "DatagramSocket":
                     remote_ip = sock["remote_ip"]
                     if remote_ip == "backend":
                         remote_ip = self.backend_ip
-                    self.DatagramSockets.append(
-                        {
+                    
+                    port = sock["port"]
+                    if port == "backend":
+                        port = self.backend_ports.get("UDP", port)
+
+                    entry = {
                             "name": name,
                             "type": sock_type,
                             "board_ip": self.board_ip,
-                            "port": sock["port"],
+                            "port": port,
                             "remote_ip": remote_ip,
-                        }
-                    )
+                    }
+                    if "remote_port" in sock:
+                        remote_port = sock["remote_port"]
+                        if remote_port == "backend":
+                            remote_port = self.backend_ports.get("UDP", remote_port)
+                        entry["remote_port"] = remote_port
+                        
+                    self.DatagramSockets.append(entry)
 
 
 class PacketDescription:
