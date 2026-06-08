@@ -1,0 +1,63 @@
+# Build and Debug
+
+## 1. Main CMake Presets
+
+- `simulator`
+- `simulator-asan`
+- `nucleo-*`
+- `board-*`
+
+## 2. Build for Simulator
+
+```sh
+./hyper build main --preset simulator
+```
+
+With sanitizers:
+
+```sh
+./hyper build main --preset simulator-asan
+```
+
+## 3. Build for MCU
+
+Example:
+
+```sh
+./hyper build main --preset board-debug-eth-ksz8041 --board-name TEST
+```
+
+The build output is copied to:
+
+- `out/build/latest.elf`
+
+If the selected `BOARD_NAME` enables packet code generation, the build also regenerates:
+
+- `Core/Inc/Communications/Packets/DataPackets.hpp`
+- `Core/Inc/Communications/Packets/OrderPackets.hpp`
+
+These headers are generated artifacts, not hand-maintained source files. They are gitignored and should not be edited or committed.
+
+## 4. Debug from VSCode
+
+Launch configurations available in `.vscode/launch.json`:
+
+- `MCU | OpenOCD | Build + Debug (RTT)`
+- `MCU | OpenOCD | Debug (No Build, RTT)`
+- `MCU | OpenOCD | Attach (External Server, RTT)`
+- `MCU | ST-LINK | Build + Debug`
+- `MCU | ST-LINK | Debug (No Build)`
+- `MCU | ST-LINK | Attach (External GDB Server)`
+- `SIM | ST-LIB Tests | Debug`
+
+Useful tasks in `.vscode/tasks.json`:
+
+- `MCU | OpenOCD | Start Server`
+- `MCU | OpenOCD | RTT Console`
+- `MCU | ST-LINK | Start GDB Server`
+
+## 5. Example Guides
+
+Per-example build and validation guides live in:
+
+- [`docs/examples/README.md`](../examples/README.md)

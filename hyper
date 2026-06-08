@@ -1,0 +1,1335 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import glob
+import os
+import platform
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import zipfile
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parent
+TOOLS_DIR = REPO_ROOT / "tools"
+STLIB_ROOT = REPO_ROOT / "deps" / "ST-LIB"
+BUILD_EXAMPLE_SCRIPT = TOOLS_DIR / "build-example.sh"
+PREFLASH_CHECK_SCRIPT = TOOLS_DIR / "preflash_check.py"
+INIT_SCRIPT = TOOLS_DIR / "init.sh"
+STLIB_BUILD_SCRIPT = STLIB_ROOT / "tools" / "build.py"
+STLIB_SIM_TESTS_SCRIPT = STLIB_ROOT / "tools" / "run_sim_tests.sh"
+HARD_FAULT_ANALYSIS_SCRIPT = TOOLS_DIR / "hard_fault_analysis.py"
+LATEST_ELF = REPO_ROOT / "out" / "build" / "latest.elf"
+
+DEFAULT_PRESET = os.environ.get("HYPER_DEFAULT_PRESET", "nucleo-debug")
+DEFAULT_FLASH_METHOD = os.environ.get("HYPER_FLASH_METHOD", "auto")
+DEFAULT_UART_TOOL = os.environ.get("HYPER_UART_TOOL", "auto")
+DEFAULT_UART_PORT = os.environ.get("HYPER_UART_PORT")
+DEFAULT_UART_BAUD = int(os.environ.get("HYPER_UART_BAUD", "115200"))
+DEFAULT_REQUIRED_CLT_VERSION = os.environ.get(
+    "HYPER_REQUIRED_STM32_CLT_VERSION", "1.21.0"
+)
+DEFAULT_CLT_ROOT = os.environ.get("HYPER_STM32CLT_ROOT") or os.environ.get(
+    "STM32_CLT_ROOT"
+)
+DEFAULT_CLT_INSTALLER = os.environ.get("HYPER_STM32CLT_INSTALLER")
+DEFAULT_CLT_DOWNLOAD_URL = os.environ.get("HYPER_STM32CLT_DOWNLOAD_URL")
+DEFAULT_UV_VERSION = os.environ.get("HYPER_UV_VERSION")
+COLOR_ENABLED = (
+    sys.stdout.isatty()
+    and os.environ.get("NO_COLOR") is None
+    and os.environ.get("TERM") != "dumb"
+)
+CLT_PRODUCT_PAGE = "https://www.st.com/en/development-tools/stm32cubeclt.html"
+CLT_RELEASE_NOTE = "https://www.st.com/resource/en/release_note/rn0132-stm32cube-commandline-toolset-release-v1210-stmicroelectronics.pdf"
+UV_INSTALL_PAGE = "https://docs.astral.sh/uv/getting-started/installation/"
+HELP_BANNER_ROWS = [
+    "",
+    "██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗      ██████╗  ██████╗ ██████╗ ",
+    "██║  ██║╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔══██╗",
+    "███████║ ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║     ██║   ██║██║   ██║██████╔╝",
+    "██╔══██║  ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║   ██║██║   ██║██╔═══╝ ",
+    "██║  ██║   ██║   ██║     ███████╗██║  ██║███████╗╚██████╔╝╚██████╔╝██║     ",
+    "╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     ",
+    "",
+    "██╗   ██╗██████╗ ██╗   ██╗",
+    "██║   ██║██╔══██╗██║   ██║",
+    "██║   ██║██████╔╝██║   ██║",
+    "██║   ██║██╔═══╝ ╚██╗ ██╔╝",
+    "╚██████╔╝██║      ╚████╔╝ ",
+    " ╚═════╝ ╚═╝       ╚═══╝  ",
+    "",
+    "HyperloopUPV",
+    "",
+    "Build • Flash • UART • Diagnostics • ST-LIB",
+    "",
+]
+HELP_BANNER_WIDTH = 82
+HELP_BANNER = "\n".join(
+    ["╔" + "═" * HELP_BANNER_WIDTH + "╗"]
+    + [f"║{row.center(HELP_BANNER_WIDTH)}║" for row in HELP_BANNER_ROWS]
+    + ["╚" + "═" * HELP_BANNER_WIDTH + "╝"]
+)
+HELP_EXAMPLES = """Examples:
+  hyper doctor
+  hyper build adc --preset nucleo-debug --test 1
+  hyper build main --preset nucleo-debug
+  hyper hardfault-analysis
+  hyper run adc --preset nucleo-debug --test 1 --uart
+  hyper uart --list-ports
+"""
+SERIAL_PATTERNS = (
+    "/dev/serial/by-id/*",
+    "/dev/cu.usbmodem*",
+    "/dev/cu.usbserial*",
+    "/dev/cu.wchusbserial*",
+    "/dev/ttyACM*",
+    "/dev/ttyUSB*",
+    "/dev/tty.usbmodem*",
+    "/dev/tty.usbserial*",
+    "/dev/tty.wchusbserial*",
+)
+
+
+class HyperError(RuntimeError):
+    pass
+
+
+class ToolStatus:
+    def __init__(
+        self,
+        *,
+        path: str | None,
+        version_line: str | None = None,
+        clt_version: str | None = None,
+    ) -> None:
+        self.path = path
+        self.version_line = version_line
+        self.clt_version = clt_version
+
+
+class HyperArgumentParser(argparse.ArgumentParser):
+    def format_help(self) -> str:
+        return f"{HELP_BANNER}\n{super().format_help()}"
+
+
+def style(text: str, *codes: str) -> str:
+    if not COLOR_ENABLED or not codes:
+        return text
+    return f"\033[{';'.join(codes)}m{text}\033[0m"
+
+
+def status_tag(status: str) -> str:
+    tags = {
+        "ok": ("[ok]", ("32", "1")),
+        "wrong": ("[wrong]", ("31", "1")),
+        "warn": ("[warn]", ("33", "1")),
+        "missing": ("[missing]", ("33", "1")),
+        "info": ("[info]", ("36", "1")),
+    }
+    text, codes = tags.get(status, (f"[{status}]", ("0",)))
+    return style(text, *codes)
+
+
+def section_title(title: str) -> None:
+    print()
+    print(style(f"== {title} ==", "36", "1"))
+
+
+def print_detail(label: str, value: str) -> None:
+    print(f"  {style(f'{label}:', '2')} {value}")
+
+
+def print_status_item(
+    label: str, status: str, value: str, *, detail: str | None = None
+) -> None:
+    print(f"  {status_tag(status):<12} {style(label, '1'):<20} {value}")
+    if detail:
+        print_detail("detail", detail)
+
+
+def print_note(message: str, *, status: str = "info") -> None:
+    print(f"  {status_tag(status)} {message}")
+
+
+def print_action(title: str, **details: str) -> None:
+    print()
+    print(style(title, "35", "1"))
+    print(style("-" * len(title), "2"))
+    for label, value in details.items():
+        print_detail(label.replace("_", " "), value)
+
+
+def print_command_context(cmd: list[str], cwd: Path) -> None:
+    print(style("== Running ==", "34", "1"))
+    print(f"  {style('$', '34', '1')} {shell_join(cmd)}")
+    if cwd != REPO_ROOT:
+        print_detail("cwd", str(cwd))
+
+
+def shell_join(cmd: list[object]) -> str:
+    return " ".join(shlex.quote(str(part)) for part in cmd)
+
+
+def run_command(
+    cmd: list[object],
+    *,
+    cwd: Path = REPO_ROOT,
+    env: dict[str, str] | None = None,
+    check: bool = True,
+) -> subprocess.CompletedProcess[str]:
+    cmd_as_text = [str(part) for part in cmd]
+    print_command_context(cmd_as_text, cwd)
+    return subprocess.run(
+        cmd_as_text,
+        cwd=cwd,
+        env=env,
+        check=check,
+        text=True,
+    )
+
+
+def exec_command(cmd: list[object]) -> int:
+    cmd_as_text = [str(part) for part in cmd]
+    print_command_context(cmd_as_text, REPO_ROOT)
+    os.execvpe(cmd_as_text[0], cmd_as_text, os.environ.copy())
+    return 1
+
+
+def command_path(name: str) -> str | None:
+    return shutil.which(name)
+
+
+def known_uv_paths() -> list[Path]:
+    candidates = [
+        Path.home()
+        / ".local"
+        / "bin"
+        / ("uv.exe" if detect_host_os() == "windows" else "uv"),
+        Path.home()
+        / ".cargo"
+        / "bin"
+        / ("uv.exe" if detect_host_os() == "windows" else "uv"),
+    ]
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.expanduser().resolve()
+        if resolved in seen or not resolved.is_file():
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return unique
+
+
+def uv_executable() -> str | None:
+    path = command_path("uv")
+    if path:
+        return path
+    candidates = known_uv_paths()
+    if candidates:
+        return str(candidates[0])
+    return None
+
+
+def download_file(url: str, destination: Path) -> None:
+    if detect_host_os() == "windows":
+        run_command(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                f"Invoke-WebRequest -Uri '{url}' -OutFile '{destination}'",
+            ]
+        )
+        return
+
+    curl = command_path("curl")
+    if curl:
+        run_command([curl, "-LsSf", url, "-o", destination])
+        return
+
+    wget = command_path("wget")
+    if wget:
+        run_command([wget, "-q", "-O", destination, url])
+        return
+
+    raise HyperError("Neither curl nor wget is available for downloading files.")
+
+
+def strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+
+
+def read_command_first_line(
+    cmd: list[str], *, preferred_pattern: str | None = None
+) -> str | None:
+    try:
+        result = subprocess.run(
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+    regex = re.compile(preferred_pattern, re.IGNORECASE) if preferred_pattern else None
+    cleaned_lines: list[str] = []
+    for stream in (result.stdout, result.stderr):
+        if not stream:
+            continue
+        for line in stream.splitlines():
+            stripped = strip_ansi(line).strip()
+            if stripped:
+                cleaned_lines.append(stripped)
+
+    if regex:
+        for line in cleaned_lines:
+            if regex.search(line):
+                return line
+
+    for line in cleaned_lines:
+        return line
+    return None
+
+
+def parse_clt_version_from_path(path: str | None) -> str | None:
+    if not path:
+        return None
+    match = re.search(r"STM32CubeCLT[_-](\d+\.\d+\.\d+)", path, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return None
+
+
+def inspect_tool(
+    name: str,
+    *,
+    version_args: list[str] | None = None,
+    version_pattern: str | None = None,
+) -> ToolStatus:
+    path = command_path(name)
+    version_line = None
+    if path and version_args:
+        version_line = read_command_first_line(
+            [path, *version_args], preferred_pattern=version_pattern
+        )
+    return ToolStatus(
+        path=path,
+        version_line=version_line,
+        clt_version=parse_clt_version_from_path(path),
+    )
+
+
+def detect_host_os() -> str:
+    system = platform.system().lower()
+    if system == "darwin":
+        return "macos"
+    if system == "windows":
+        return "windows"
+    return "linux"
+
+
+def clt_root_candidates(version: str | None = None) -> list[Path]:
+    candidates: list[Path] = []
+    if DEFAULT_CLT_ROOT:
+        candidates.append(Path(DEFAULT_CLT_ROOT).expanduser())
+
+    host_os = detect_host_os()
+    version_patterns = [version] if version else [None]
+    for ver in version_patterns:
+        suffixes = [f"STM32CubeCLT_{ver}", f"STM32CubeCLT-{ver}"] if ver else []
+        if host_os in ("macos", "linux"):
+            if ver:
+                suffixes.extend([f"STM32CubeCLT_{ver}*", f"STM32CubeCLT-{ver}*"])
+            base_dirs = [Path("/opt/ST"), Path.home() / "ST"]
+            for base_dir in base_dirs:
+                if not base_dir.is_dir():
+                    continue
+                if ver:
+                    for suffix in suffixes:
+                        candidates.extend(base_dir.glob(suffix))
+                else:
+                    candidates.extend(base_dir.glob("STM32CubeCLT_*"))
+                    candidates.extend(base_dir.glob("STM32CubeCLT-*"))
+        else:
+            program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+            base_dirs = [
+                Path(program_files) / "STMicroelectronics" / "STM32Cube",
+                Path(program_files) / "STMicroelectronics",
+                Path(r"C:\ST"),
+            ]
+            for base_dir in base_dirs:
+                if not base_dir.is_dir():
+                    continue
+                if ver:
+                    candidates.extend(base_dir.glob(f"STM32CubeCLT_{ver}*"))
+                    candidates.extend(base_dir.glob(f"STM32CubeCLT-{ver}*"))
+                else:
+                    candidates.extend(base_dir.glob("STM32CubeCLT_*"))
+                    candidates.extend(base_dir.glob("STM32CubeCLT-*"))
+
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.expanduser().resolve()
+        if resolved in seen or not resolved.exists():
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return unique
+
+
+def infer_clt_root_from_tool(path: str | None) -> Path | None:
+    if not path:
+        return None
+    resolved = Path(path).expanduser().resolve()
+    for parent in (resolved, *resolved.parents):
+        if re.search(r"STM32CubeCLT[_-]\d+\.\d+\.\d+", parent.name, re.IGNORECASE):
+            return parent
+    return None
+
+
+def clt_tool_status(
+    tool_relative_path: str, *, version_args: list[str], version_pattern: str
+) -> ToolStatus:
+    for root in clt_root_candidates(DEFAULT_REQUIRED_CLT_VERSION):
+        tool_path = root / tool_relative_path
+        if tool_path.is_file():
+            version_line = read_command_first_line(
+                [str(tool_path), *version_args], preferred_pattern=version_pattern
+            )
+            return ToolStatus(
+                path=str(tool_path),
+                version_line=version_line,
+                clt_version=parse_clt_version_from_path(str(root)),
+            )
+
+    path_status = inspect_tool(
+        Path(tool_relative_path).name,
+        version_args=version_args,
+        version_pattern=version_pattern,
+    )
+    inferred_root = infer_clt_root_from_tool(path_status.path)
+    if inferred_root is not None:
+        path_status.clt_version = parse_clt_version_from_path(str(inferred_root))
+    return path_status
+
+
+def inspect_clt() -> tuple[ToolStatus, ToolStatus, str | None]:
+    arm_gcc = clt_tool_status(
+        "GNU-tools-for-STM32/bin/arm-none-eabi-gcc",
+        version_args=["--version"],
+        version_pattern=r"arm-none-eabi-gcc",
+    )
+    programmer = clt_tool_status(
+        "STM32CubeProgrammer/bin/STM32_Programmer_CLI",
+        version_args=["--version"],
+        version_pattern=r"version",
+    )
+    clt_version = arm_gcc.clt_version or programmer.clt_version
+    if clt_version is None:
+        for root in clt_root_candidates():
+            clt_version = parse_clt_version_from_path(str(root))
+            if clt_version:
+                break
+    return arm_gcc, programmer, clt_version
+
+
+def installer_version_tokens(version: str) -> tuple[str, str, str]:
+    return version, version.replace(".", "-"), version.replace(".", "_")
+
+
+def installer_matches_version(path: Path, version: str) -> bool:
+    lower_name = path.name.lower()
+    if "stm32cubeclt" not in lower_name:
+        return False
+    return any(token in lower_name for token in installer_version_tokens(version))
+
+
+def installer_candidates(version: str) -> list[Path]:
+    dirs = [REPO_ROOT, Path.cwd(), Path.home() / "Downloads", Path.home() / "Desktop"]
+    candidates: list[Path] = []
+    seen: set[Path] = set()
+    for directory in dirs:
+        resolved_dir = directory.expanduser().resolve()
+        if resolved_dir in seen or not resolved_dir.is_dir():
+            continue
+        seen.add(resolved_dir)
+        try:
+            for entry in resolved_dir.iterdir():
+                if not entry.is_file():
+                    continue
+                if installer_matches_version(entry, version):
+                    candidates.append(entry.resolve())
+        except PermissionError:
+            continue
+    candidates.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    return candidates
+
+
+def maybe_download_clt_installer(version: str) -> Path | None:
+    if not DEFAULT_CLT_DOWNLOAD_URL:
+        return None
+
+    suffix = Path(DEFAULT_CLT_DOWNLOAD_URL).suffix or ".bin"
+    download_dir = REPO_ROOT / "out" / "downloads"
+    download_dir.mkdir(parents=True, exist_ok=True)
+    destination = download_dir / f"stm32cubeclt-{version}{suffix}"
+    print_detail("download url", DEFAULT_CLT_DOWNLOAD_URL)
+    print_detail("download dest", str(destination))
+    download_file(DEFAULT_CLT_DOWNLOAD_URL, destination)
+    return destination
+
+
+def prepare_clt_installers(installer: Path) -> tuple[list[Path], Path | None]:
+    host_os = detect_host_os()
+    if host_os == "macos":
+        if installer.suffix.lower() == ".pkg":
+            return [installer], None
+        if (
+            not installer.name.endswith((".tar.gz", ".tgz"))
+            and installer.suffix.lower() != ".zip"
+        ):
+            raise HyperError(
+                f"Unsupported macOS STM32CubeCLT installer: {installer.name}"
+            )
+        tmpdir = Path(tempfile.mkdtemp(prefix="hyper-clt-macos-"))
+        if installer.suffix.lower() == ".zip":
+            with zipfile.ZipFile(installer) as archive:
+                archive.extractall(tmpdir)
+            pkgs = [path for path in tmpdir.rglob("*.pkg") if path.is_file()]
+            if not pkgs:
+                nested_archives = [
+                    path
+                    for path in tmpdir.rglob("*")
+                    if path.is_file() and path.name.endswith((".tar.gz", ".tgz"))
+                ]
+                if not nested_archives:
+                    raise HyperError(
+                        f"No .pkg or .tar.gz files found in {installer.name}"
+                    )
+                nested_archives.sort(
+                    key=lambda path: (
+                        "stm32cubeclt" not in path.name.lower(),
+                        path.name.lower(),
+                    )
+                )
+                for nested_archive in nested_archives:
+                    with tarfile.open(nested_archive, "r:*") as archive:
+                        archive.extractall(tmpdir)
+                pkgs = [path for path in tmpdir.rglob("*.pkg") if path.is_file()]
+            if not pkgs:
+                raise HyperError(f"No .pkg files found in {installer.name}")
+            pkgs.sort(
+                key=lambda path: ("st-link" in path.name.lower(), path.name.lower())
+            )
+            return pkgs, tmpdir
+
+        with tarfile.open(installer, "r:*") as archive:
+            archive.extractall(tmpdir)
+        pkgs = [path for path in tmpdir.rglob("*.pkg") if path.is_file()]
+        if not pkgs:
+            raise HyperError(f"No .pkg files found in {installer.name}")
+        pkgs.sort(key=lambda path: ("st-link" in path.name.lower(), path.name.lower()))
+        return pkgs, tmpdir
+
+    if host_os == "windows":
+        if installer.suffix.lower() == ".exe":
+            return [installer], None
+        if installer.suffix.lower() != ".zip":
+            raise HyperError(
+                f"Unsupported Windows STM32CubeCLT installer: {installer.name}"
+            )
+        tmpdir = Path(tempfile.mkdtemp(prefix="hyper-clt-windows-"))
+        with zipfile.ZipFile(installer) as archive:
+            archive.extractall(tmpdir)
+        exes = [path for path in tmpdir.rglob("*.exe") if path.is_file()]
+        if not exes:
+            raise HyperError(f"No .exe files found in {installer.name}")
+        exes.sort(
+            key=lambda path: (
+                "stm32cubeclt" not in path.name.lower(),
+                path.name.lower(),
+            )
+        )
+        return exes, tmpdir
+
+    if installer.suffix != ".sh":
+        raise HyperError(f"Unsupported Linux STM32CubeCLT installer: {installer.name}")
+    return [installer], None
+
+
+def run_clt_installer(installer: Path) -> None:
+    host_os = detect_host_os()
+    if host_os == "macos":
+        run_command(["sudo", "installer", "-pkg", installer, "-target", "/"])
+        return
+    if host_os == "windows":
+        run_command([installer])
+        return
+    run_command(["sudo", "sh", installer])
+
+
+def ensure_required_clt() -> None:
+    arm_gcc, programmer, clt_version = inspect_clt()
+    if clt_version == DEFAULT_REQUIRED_CLT_VERSION:
+        print_action(
+            "STM32CubeCLT", version=DEFAULT_REQUIRED_CLT_VERSION, status="ready"
+        )
+        if arm_gcc.path:
+            print_detail("arm gcc", arm_gcc.path)
+        if programmer.path:
+            print_detail("programmer", programmer.path)
+        print_note("required STM32CubeCLT is already installed", status="ok")
+        return
+
+    print_action(
+        "STM32CubeCLT",
+        expected=DEFAULT_REQUIRED_CLT_VERSION,
+        detected=clt_version or "missing",
+        host=detect_host_os(),
+    )
+    installer = (
+        Path(DEFAULT_CLT_INSTALLER).expanduser().resolve()
+        if DEFAULT_CLT_INSTALLER
+        else None
+    )
+    if installer is None:
+        candidates = installer_candidates(DEFAULT_REQUIRED_CLT_VERSION)
+        installer = candidates[0] if candidates else None
+    if installer is None:
+        installer = maybe_download_clt_installer(DEFAULT_REQUIRED_CLT_VERSION)
+
+    if installer is None:
+        raise HyperError(
+            "STM32CubeCLT installer not found. Download the official installer for "
+            f"{DEFAULT_REQUIRED_CLT_VERSION} from {CLT_PRODUCT_PAGE} "
+            f"(release note: {CLT_RELEASE_NOTE}) and place it in ~/Downloads, "
+            "or set HYPER_STM32CLT_INSTALLER to the installer path, "
+            "or set HYPER_STM32CLT_DOWNLOAD_URL to a direct installer URL."
+        )
+
+    print_detail("installer", str(installer))
+    installers, cleanup_dir = prepare_clt_installers(installer)
+    try:
+        for prepared_installer in installers:
+            print_detail("install step", prepared_installer.name)
+            run_clt_installer(prepared_installer)
+    finally:
+        if cleanup_dir is not None:
+            shutil.rmtree(cleanup_dir, ignore_errors=True)
+
+    _, _, installed_version = inspect_clt()
+    if installed_version != DEFAULT_REQUIRED_CLT_VERSION:
+        raise HyperError(
+            f"STM32CubeCLT installation completed but detected version is {installed_version or 'missing'}."
+        )
+    print_note(f"STM32CubeCLT {DEFAULT_REQUIRED_CLT_VERSION} installed", status="ok")
+
+
+def uv_install_url() -> str:
+    if DEFAULT_UV_VERSION:
+        return f"https://astral.sh/uv/{DEFAULT_UV_VERSION}/install.sh"
+    return "https://astral.sh/uv/install.sh"
+
+
+def ensure_uv() -> str:
+    uv_path = uv_executable()
+    if uv_path:
+        version_line = read_command_first_line([uv_path, "--version"])
+        print_action("uv", status="ready")
+        print_detail("binary", uv_path)
+        if version_line:
+            print_detail("version", version_line)
+        print_note("uv is available", status="ok")
+        return uv_path
+
+    print_action("uv", status="installing", host=detect_host_os())
+    install_url = uv_install_url()
+    print_detail("source", install_url)
+
+    tmpdir = Path(tempfile.mkdtemp(prefix="hyper-uv-install-"))
+    script_name = "install.ps1" if detect_host_os() == "windows" else "install.sh"
+    installer = tmpdir / script_name
+    try:
+        download_file(install_url, installer)
+        if detect_host_os() == "windows":
+            run_command(
+                [
+                    "powershell",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    installer,
+                ]
+            )
+        else:
+            env = os.environ.copy()
+            env.setdefault("UV_NO_MODIFY_PATH", "1")
+            run_command(["sh", installer], env=env)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+    uv_path = uv_executable()
+    if not uv_path:
+        raise HyperError(
+            f"uv installation completed but the binary is still not visible. See {UV_INSTALL_PAGE}"
+        )
+
+    version_line = read_command_first_line([uv_path, "--version"])
+    print_detail("binary", uv_path)
+    if version_line:
+        print_detail("version", version_line)
+    print_note("uv installed", status="ok")
+    return uv_path
+
+
+def virtual_python_path() -> Path:
+    if detect_host_os() == "windows":
+        return REPO_ROOT / "virtual" / "Scripts" / "python.exe"
+    return REPO_ROOT / "virtual" / "bin" / "python"
+
+
+def setup_python_env_with_uv(uv_path: str) -> None:
+    print_action("Python Env", tool="uv", venv=str(REPO_ROOT / "virtual"))
+    run_command([uv_path, "venv", REPO_ROOT / "virtual"])
+    run_command(
+        [
+            uv_path,
+            "pip",
+            "install",
+            "--python",
+            virtual_python_path(),
+            "-r",
+            REPO_ROOT / "requirements.txt",
+        ]
+    )
+    print_note("python environment ready", status="ok")
+
+
+def ensure_file(path: Path, label: str) -> None:
+    if not path.is_file():
+        raise HyperError(f"{label} not found: {path}")
+
+
+def resolve_flash_method(requested: str) -> str:
+    if requested != "auto":
+        if requested == "stm32prog" and not command_path("STM32_Programmer_CLI"):
+            raise HyperError("STM32_Programmer_CLI is not available in PATH.")
+        if requested == "openocd" and not command_path("openocd"):
+            raise HyperError("openocd is not available in PATH.")
+        return requested
+
+    if command_path("STM32_Programmer_CLI"):
+        return "stm32prog"
+    if command_path("openocd"):
+        return "openocd"
+    raise HyperError(
+        "No supported flash tool found. Install STM32_Programmer_CLI or openocd."
+    )
+
+
+def serial_port_rank(port: str) -> tuple[int, str]:
+    if port.startswith("/dev/serial/by-id/"):
+        return (0, port)
+    if port.startswith("/dev/cu.usbmodem"):
+        return (1, port)
+    if port.startswith("/dev/ttyACM"):
+        return (2, port)
+    if port.startswith("/dev/cu.usbserial"):
+        return (3, port)
+    if port.startswith("/dev/ttyUSB"):
+        return (4, port)
+    if port.startswith("/dev/cu.wchusbserial"):
+        return (5, port)
+    if port.startswith("/dev/tty.usbmodem"):
+        return (6, port)
+    if port.startswith("/dev/tty.usbserial"):
+        return (7, port)
+    if port.startswith("/dev/tty.wchusbserial"):
+        return (8, port)
+    return (99, port)
+
+
+def find_serial_ports() -> list[str]:
+    ports: set[str] = set()
+    for pattern in SERIAL_PATTERNS:
+        ports.update(glob.glob(pattern))
+    return sorted(ports, key=serial_port_rank)
+
+
+def choose_serial_port(requested: str | None) -> str:
+    explicit = requested or DEFAULT_UART_PORT
+    if explicit and explicit != "auto":
+        return explicit
+
+    ports = find_serial_ports()
+    if not ports:
+        raise HyperError(
+            "No USB serial port detected. Connect the board or pass --port explicitly."
+        )
+    if len(ports) == 1:
+        return ports[0]
+
+    preferred_prefixes = (
+        "/dev/serial/by-id/",
+        "/dev/cu.usbmodem",
+        "/dev/ttyACM",
+        "/dev/cu.usbserial",
+        "/dev/ttyUSB",
+    )
+    for prefix in preferred_prefixes:
+        matches = [port for port in ports if port.startswith(prefix)]
+        if len(matches) == 1:
+            return matches[0]
+
+    lines = ["Multiple UART ports detected. Pass --port explicitly:"]
+    lines.extend(f"  - {port}" for port in ports)
+    raise HyperError("\n".join(lines))
+
+
+def resolve_uart_tool(requested: str) -> str:
+    if requested != "auto":
+        if not command_path(requested):
+            raise HyperError(f"UART tool '{requested}' is not available in PATH.")
+        return requested
+
+    if command_path("tio"):
+        return "tio"
+    if command_path("cu"):
+        return "cu"
+    raise HyperError(
+        "No supported UART tool found. Install 'tio' or ensure 'cu' is available."
+    )
+
+
+def run_build_example(
+    *,
+    example: str,
+    test: str | None,
+    no_test: bool,
+    preset: str,
+    board_name: str | None,
+    extra_cxx_flags: str | None,
+    jobs: int | None,
+) -> None:
+    ensure_file(BUILD_EXAMPLE_SCRIPT, "build-example helper")
+    is_main_target = example.strip().lower() in {"main", "default"}
+    selected_test = "none" if no_test or is_main_target else (test or "default")
+    print_action(
+        "Build",
+        example=example,
+        preset=preset,
+        test=selected_test,
+        board_name=board_name or "default",
+    )
+
+    cmd: list[object] = [BUILD_EXAMPLE_SCRIPT, "--example", example, "--preset", preset]
+    if no_test:
+        cmd.append("--no-test")
+    elif test is not None:
+        cmd.extend(["--test", test])
+    if board_name:
+        cmd.extend(["--board-name", board_name])
+    if extra_cxx_flags:
+        cmd.extend(["--extra-cxx-flags", extra_cxx_flags])
+
+    env = os.environ.copy()
+    if jobs:
+        env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(jobs)
+        print_detail("jobs", str(jobs))
+    if extra_cxx_flags:
+        print_detail("extra cxx flags", extra_cxx_flags)
+
+    run_command(cmd, env=env)
+    print_note("build completed", status="ok")
+
+
+def run_preflash_check(skip_preflight: bool) -> None:
+    if skip_preflight:
+        print_note("preflight skipped", status="warn")
+        return
+    ensure_file(PREFLASH_CHECK_SCRIPT, "preflash helper")
+    print_action("Preflight", target=str(REPO_ROOT / "out" / "build"))
+    run_command([sys.executable, PREFLASH_CHECK_SCRIPT, REPO_ROOT / "out" / "build"])
+    print_note("preflight passed", status="ok")
+
+
+def flash_elf(elf: Path, method: str, verify: bool, skip_preflight: bool) -> None:
+    ensure_file(elf, "ELF image")
+    resolved_method = resolve_flash_method(method)
+    print_action(
+        "Flash",
+        elf=str(elf),
+        method=resolved_method,
+        verify="yes" if verify else "no",
+    )
+    run_preflash_check(skip_preflight)
+    if resolved_method == "stm32prog":
+        cmd = [
+            "STM32_Programmer_CLI",
+            "-c",
+            "port=SWD",
+            "mode=UR",
+            "-w",
+            elf,
+        ]
+        if verify:
+            cmd.append("-v")
+        cmd.append("-rst")
+        run_command(cmd)
+        print_note("flash completed", status="ok")
+        return
+
+    base_cmd: list[object] = [
+        "openocd",
+        "-f",
+        REPO_ROOT / ".vscode" / "stlink.cfg",
+        "-f",
+        REPO_ROOT / ".vscode" / "stm32h7x.cfg",
+    ]
+    if verify:
+        verify_cmd = base_cmd + ["-c", f"program {elf} verify reset exit"]
+        result = run_command(verify_cmd, check=False)
+        if result.returncode == 0:
+            print_note("flash completed", status="ok")
+            return
+        print_note("OpenOCD verify failed, retrying without verify", status="warn")
+
+    run_command(base_cmd + ["-c", f"program {elf} reset exit"])
+    print_note("flash completed", status="ok")
+
+
+def open_uart(port: str | None, baud: int, tool: str) -> int:
+    resolved_port = choose_serial_port(port)
+    resolved_tool = resolve_uart_tool(tool)
+    print_action(
+        "UART",
+        tool=resolved_tool,
+        port=resolved_port,
+        baud=str(baud),
+    )
+    print_note("opening interactive UART session", status="info")
+
+    if resolved_tool == "tio":
+        return exec_command(["tio", "--baudrate", str(baud), resolved_port])
+    if resolved_tool == "cu":
+        return exec_command(["cu", "-l", resolved_port, "-s", str(baud)])
+    raise HyperError(f"Unsupported UART tool '{resolved_tool}'.")
+
+
+def list_serial_ports() -> int:
+    ports = find_serial_ports()
+    print_action("UART Ports")
+    if not ports:
+        print_note("no candidate serial ports found", status="warn")
+        return 1
+    for port in ports:
+        print_detail("port", port)
+    print_note(f"{len(ports)} port(s) found", status="ok")
+    return 0
+
+
+def handle_init(_: argparse.Namespace) -> int:
+    ensure_required_clt()
+    uv_path = ensure_uv()
+    setup_python_env_with_uv(uv_path)
+    ensure_file(INIT_SCRIPT, "init helper")
+    print_action("Init", script=str(INIT_SCRIPT))
+    env = os.environ.copy()
+    env["HYPER_SKIP_PYTHON_INIT"] = "1"
+    run_command([INIT_SCRIPT], env=env)
+    print_note("init completed", status="ok")
+    return 0
+
+
+def handle_examples_list(_: argparse.Namespace) -> int:
+    ensure_file(BUILD_EXAMPLE_SCRIPT, "build-example helper")
+    print_action("Examples", mode="list")
+    run_command([BUILD_EXAMPLE_SCRIPT, "--list"])
+    return 0
+
+
+def handle_examples_tests(args: argparse.Namespace) -> int:
+    ensure_file(BUILD_EXAMPLE_SCRIPT, "build-example helper")
+    print_action("Examples", mode="tests", example=args.example)
+    run_command([BUILD_EXAMPLE_SCRIPT, "--list-tests", args.example])
+    return 0
+
+
+def handle_build(args: argparse.Namespace) -> int:
+    run_build_example(
+        example=args.example,
+        test=args.test,
+        no_test=args.no_test,
+        preset=args.preset,
+        board_name=args.board_name,
+        extra_cxx_flags=args.extra_cxx_flags,
+        jobs=args.jobs,
+    )
+    return 0
+
+
+def handle_flash(args: argparse.Namespace) -> int:
+    flash_elf(args.elf.resolve(), args.method, not args.no_verify, args.skip_preflight)
+    return 0
+
+
+def handle_run(args: argparse.Namespace) -> int:
+    print(style("Hyper Run", "1"))
+    print(style("=" * 16, "2"))
+    run_build_example(
+        example=args.example,
+        test=args.test,
+        no_test=args.no_test,
+        preset=args.preset,
+        board_name=args.board_name,
+        extra_cxx_flags=args.extra_cxx_flags,
+        jobs=args.jobs,
+    )
+    flash_elf(
+        args.elf.resolve(), args.flash_method, not args.no_verify, args.skip_preflight
+    )
+    if args.uart:
+        return open_uart(args.port, args.baud, args.uart_tool)
+    print_note("run completed", status="ok")
+    return 0
+
+
+def handle_uart(args: argparse.Namespace) -> int:
+    if args.list_ports:
+        return list_serial_ports()
+    return open_uart(args.port, args.baud, args.tool)
+
+
+def print_status_line(label: str, value: str) -> None:
+    print(f"{label:<18} {value}")
+
+
+def handle_doctor(_: argparse.Namespace) -> int:
+    issues: list[str] = []
+    arm_gcc, programmer, clt_version = inspect_clt()
+    uv_path = uv_executable()
+    uv_version = read_command_first_line([uv_path, "--version"]) if uv_path else None
+
+    if not arm_gcc.path:
+        issues.append("arm-none-eabi-gcc missing from PATH")
+    if not clt_version:
+        issues.append("STM32CubeCLT version could not be inferred from tool paths")
+    elif clt_version != DEFAULT_REQUIRED_CLT_VERSION:
+        issues.append(
+            f"STM32CubeCLT {clt_version} detected, expected {DEFAULT_REQUIRED_CLT_VERSION}"
+        )
+    if not uv_path:
+        issues.append("uv is not installed")
+
+    overall_status = "ok" if not issues else "wrong"
+
+    print(style(f"Hyper Doctor {status_tag(overall_status)}", "1"))
+    print(style("=" * 32, "2"))
+
+    section_title("Environment")
+    print_detail("repo", str(REPO_ROOT))
+    print_detail("default preset", DEFAULT_PRESET)
+    print_detail("default flash", DEFAULT_FLASH_METHOD)
+    print_detail("default baud", str(DEFAULT_UART_BAUD))
+    print_detail("latest elf", "present" if LATEST_ELF.exists() else "missing")
+
+    section_title("Toolchain")
+    print_status_item(
+        "arm-none-eabi-gcc",
+        "ok" if arm_gcc.path else "missing",
+        arm_gcc.path or "not found",
+    )
+    if arm_gcc.version_line:
+        print_detail("version", arm_gcc.version_line)
+    print_status_item(
+        "STM32_Programmer",
+        "ok" if programmer.path else "missing",
+        programmer.path or "not found",
+    )
+    if programmer.version_line:
+        print_detail("version", programmer.version_line)
+    print_status_item(
+        "STM32CubeCLT",
+        overall_status,
+        f"detected={clt_version or 'unknown'} expected={DEFAULT_REQUIRED_CLT_VERSION}",
+    )
+    if issues:
+        for issue in issues:
+            print_note(issue, status="wrong")
+
+    section_title("Host Tools")
+    for tool_name in ("cmake", "ninja", "openocd", "tio", "cu"):
+        path = command_path(tool_name)
+        print_status_item(tool_name, "ok" if path else "missing", path or "not found")
+    print_status_item("uv", "ok" if uv_path else "missing", uv_path or "not found")
+    if uv_version:
+        print_detail("version", uv_version)
+
+    try:
+        resolved_uart_tool = resolve_uart_tool("auto")
+        uart_tool_status = "ok"
+    except HyperError:
+        resolved_uart_tool = "not found"
+        uart_tool_status = "missing"
+    print_status_item("uart tool", uart_tool_status, resolved_uart_tool)
+
+    section_title("Serial")
+    ports = find_serial_ports()
+    if not ports:
+        print_status_item("serial ports", "warn", "none detected")
+    elif len(ports) == 1:
+        print_status_item("serial port", "ok", ports[0])
+    else:
+        print_status_item("serial ports", "ok", f"{len(ports)} detected")
+        for port in ports:
+            print_detail("port", port)
+
+    section_title("Repo Helpers")
+    print_status_item(
+        "stlib build.py",
+        "ok" if STLIB_BUILD_SCRIPT.is_file() else "missing",
+        str(STLIB_BUILD_SCRIPT),
+    )
+    print_status_item(
+        "stlib sim tests",
+        "ok" if STLIB_SIM_TESTS_SCRIPT.is_file() else "missing",
+        str(STLIB_SIM_TESTS_SCRIPT),
+    )
+    print_status_item(
+        "hard fault tool",
+        "ok" if HARD_FAULT_ANALYSIS_SCRIPT.is_file() else "missing",
+        str(HARD_FAULT_ANALYSIS_SCRIPT),
+    )
+
+    section_title("Summary")
+    if issues:
+        print_note("doctor failed", status="wrong")
+    else:
+        print_note("doctor passed", status="ok")
+    return 1 if issues else 0
+
+
+def handle_stlib_build(args: argparse.Namespace) -> int:
+    ensure_file(STLIB_BUILD_SCRIPT, "ST-LIB build helper")
+    print_action(
+        "ST-LIB Build", preset=args.preset, tests="yes" if args.run_tests else "no"
+    )
+    cmd: list[object] = [sys.executable, STLIB_BUILD_SCRIPT, "--preset", args.preset]
+    if args.run_tests:
+        cmd.append("--run-tests")
+    run_command(cmd, cwd=STLIB_ROOT)
+    print_note("ST-LIB build completed", status="ok")
+    return 0
+
+
+def handle_stlib_sim_tests(_: argparse.Namespace) -> int:
+    ensure_file(STLIB_SIM_TESTS_SCRIPT, "ST-LIB simulator test helper")
+    print_action("ST-LIB Sim Tests", script=str(STLIB_SIM_TESTS_SCRIPT))
+    run_command([STLIB_SIM_TESTS_SCRIPT], cwd=STLIB_ROOT)
+    print_note("sim tests completed", status="ok")
+    return 0
+
+
+def handle_hardfault_analysis(_: argparse.Namespace) -> int:
+    ensure_file(HARD_FAULT_ANALYSIS_SCRIPT, "hard fault analysis helper")
+    print_action(
+        "Hard Fault Analysis",
+        script=str(HARD_FAULT_ANALYSIS_SCRIPT),
+        elf=str(LATEST_ELF),
+    )
+    run_command([sys.executable, HARD_FAULT_ANALYSIS_SCRIPT], cwd=REPO_ROOT)
+    print_note("hard fault analysis completed", status="ok")
+    return 0
+
+
+def add_example_build_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("example", help="Target name, e.g. adc or main")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--test", help="Test selector, e.g. 0, 1 or TEST_1")
+    group.add_argument(
+        "--no-test", action="store_true", help="Do not inject any TEST_* macro"
+    )
+    parser.add_argument(
+        "--preset", default=DEFAULT_PRESET, help="CMake preset to build"
+    )
+    parser.add_argument("--board-name", help="Override BOARD_NAME for code generation")
+    parser.add_argument(
+        "--extra-cxx-flags", help="Extra flags appended after the injected defines"
+    )
+    parser.add_argument("-j", "--jobs", type=int, help="Set CMAKE_BUILD_PARALLEL_LEVEL")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = HyperArgumentParser(
+        prog="hyper",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Repo-local helper CLI for firmware targets, flashing, UART and ST-LIB wrappers.",
+        epilog=HELP_EXAMPLES,
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    init_parser = subparsers.add_parser("init", help="Run tools/init.sh")
+    init_parser.set_defaults(func=handle_init)
+
+    examples_parser = subparsers.add_parser(
+        "examples", help="Inspect available examples"
+    )
+    examples_subparsers = examples_parser.add_subparsers(
+        dest="examples_command", required=True
+    )
+
+    examples_list_parser = examples_subparsers.add_parser(
+        "list", help="List EXAMPLE_* selectors"
+    )
+    examples_list_parser.set_defaults(func=handle_examples_list)
+
+    examples_tests_parser = examples_subparsers.add_parser(
+        "tests", help="List TEST_* selectors for one example"
+    )
+    examples_tests_parser.add_argument("example", help="Example name, e.g. adc")
+    examples_tests_parser.set_defaults(func=handle_examples_tests)
+
+    build_parser_cmd = subparsers.add_parser("build", help="Build one firmware target")
+    add_example_build_arguments(build_parser_cmd)
+    build_parser_cmd.set_defaults(func=handle_build)
+
+    flash_parser = subparsers.add_parser(
+        "flash", help="Flash an ELF image onto the board"
+    )
+    flash_parser.add_argument(
+        "--elf", type=Path, default=LATEST_ELF, help="ELF image to flash"
+    )
+    flash_parser.add_argument(
+        "--method",
+        choices=("auto", "stm32prog", "openocd"),
+        default=DEFAULT_FLASH_METHOD,
+        help="Flash tool selection",
+    )
+    flash_parser.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Skip flash verification when supported",
+    )
+    flash_parser.add_argument(
+        "--skip-preflight",
+        action="store_true",
+        help="Skip tools/preflash_check.py before flashing",
+    )
+    flash_parser.set_defaults(func=handle_flash)
+
+    run_parser = subparsers.add_parser(
+        "run", help="Build then flash one firmware target"
+    )
+    add_example_build_arguments(run_parser)
+    run_parser.add_argument(
+        "--elf", type=Path, default=LATEST_ELF, help="ELF image to flash after build"
+    )
+    run_parser.add_argument(
+        "--flash-method",
+        choices=("auto", "stm32prog", "openocd"),
+        default=DEFAULT_FLASH_METHOD,
+        help="Flash tool selection",
+    )
+    run_parser.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Skip flash verification when supported",
+    )
+    run_parser.add_argument(
+        "--skip-preflight",
+        action="store_true",
+        help="Skip tools/preflash_check.py before flashing",
+    )
+    run_parser.add_argument(
+        "--uart", action="store_true", help="Open UART after flashing"
+    )
+    run_parser.add_argument("--port", help="Serial port path or 'auto'")
+    run_parser.add_argument(
+        "--baud", type=int, default=DEFAULT_UART_BAUD, help="UART baud rate"
+    )
+    run_parser.add_argument(
+        "--uart-tool",
+        choices=("auto", "tio", "cu"),
+        default=DEFAULT_UART_TOOL,
+        help="Serial terminal program",
+    )
+    run_parser.set_defaults(func=handle_run)
+
+    uart_parser = subparsers.add_parser("uart", help="Open the board UART")
+    uart_parser.add_argument("--port", help="Serial port path or 'auto'")
+    uart_parser.add_argument(
+        "--baud", type=int, default=DEFAULT_UART_BAUD, help="UART baud rate"
+    )
+    uart_parser.add_argument(
+        "--tool",
+        choices=("auto", "tio", "cu"),
+        default=DEFAULT_UART_TOOL,
+        help="Serial terminal program",
+    )
+    uart_parser.add_argument(
+        "--list-ports", action="store_true", help="List candidate serial ports and exit"
+    )
+    uart_parser.set_defaults(func=handle_uart)
+
+    doctor_parser = subparsers.add_parser(
+        "doctor", help="Show tool and serial-port availability"
+    )
+    doctor_parser.set_defaults(func=handle_doctor)
+
+    hardfault_parser = subparsers.add_parser(
+        "hardfault-analysis",
+        help="Analyze the latest stored hard fault dump",
+    )
+    hardfault_parser.set_defaults(func=handle_hardfault_analysis)
+
+    stlib_parser = subparsers.add_parser("stlib", help="Run ST-LIB helper flows")
+    stlib_subparsers = stlib_parser.add_subparsers(dest="stlib_command", required=True)
+
+    stlib_build_parser = stlib_subparsers.add_parser(
+        "build", help="Run deps/ST-LIB/tools/build.py"
+    )
+    stlib_build_parser.add_argument(
+        "--preset", default="simulator", help="ST-LIB CMake preset"
+    )
+    stlib_build_parser.add_argument(
+        "--run-tests", action="store_true", help="Run tests after build"
+    )
+    stlib_build_parser.set_defaults(func=handle_stlib_build)
+
+    stlib_tests_parser = stlib_subparsers.add_parser(
+        "sim-tests", help="Run ST-LIB simulator tests"
+    )
+    stlib_tests_parser.set_defaults(func=handle_stlib_sim_tests)
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    if len(sys.argv) == 1:
+        print(parser.format_help(), end="")
+        return 0
+    args = parser.parse_args()
+    try:
+        return args.func(args)
+    except subprocess.CalledProcessError as exc:
+        print_note(f"command failed with exit code {exc.returncode}", status="wrong")
+        return exc.returncode
+    except HyperError as exc:
+        print(style(f"Hyper Error {status_tag('wrong')}", "1"), file=sys.stderr)
+        print(f"  {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

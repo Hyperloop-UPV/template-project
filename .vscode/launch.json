@@ -2,49 +2,193 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "MCU | OpenOCD | Build + Debug (RTT)",
       "type": "cortex-debug",
       "request": "launch",
-      "name": "Build and Debug Project",
-      "servertype": "stlink",
-      "cwd": "${workspaceRoot}",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "openocd",
+      "serverpath": "openocd",
+      "configFiles": [
+        ".vscode/stlink.cfg",
+        ".vscode/stm32h7x.cfg"
+      ],
+      "serverArgs": [],
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
       "runToEntryPoint": "main",
-      "showDevDebugOutput": "raw",
-      "executable": "out/build/latest.elf",
-      "device": "STM32H723ZG",
-      "configFiles": [".vscode/stlink.cfg", ".vscode/stm32h7x.cfg"],
-      "svdFile": ".vscode/STM32H723.svd",
-      "swoConfig": {
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "preLaunchCommands": [
+        "monitor reset halt"
+      ],
+      "postLaunchCommands": [
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
+        "monitor rtt start",
+        "monitor rtt server start 9090 0"
+      ],
+      "postRestartCommands": [
+        "monitor halt",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
+        "monitor rtt start",
+        "monitor rtt server start 9090 0"
+      ],
+      "rttConfig": {
         "enabled": true,
-        "cpuFrequency": 8000000,
-        "swoFrequency": 2000000,
-        "source": "probe",
-        "decoders": [{ "type": "console", "label": "ITM", "port": 0 }]
+        "address": "auto",
+        "decoders": [
+          {
+            "port": 0,
+            "type": "console"
+          }
+        ]
       },
       "preLaunchTask": "CMake: build"
     },
     {
+      "name": "MCU | OpenOCD | Debug (No Build, RTT)",
       "type": "cortex-debug",
       "request": "launch",
-      "name": "Debug Project",
-      "servertype": "stlink",
-      "cwd": "${workspaceRoot}",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "openocd",
+      "serverpath": "openocd",
+      "configFiles": [
+        ".vscode/stlink.cfg",
+        ".vscode/stm32h7x.cfg"
+      ],
+      "serverArgs": [],
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
       "runToEntryPoint": "main",
-      "showDevDebugOutput": "raw",
-      "executable": "out/build/latest.elf",
-      "device": "STM32H723ZG",
-      "configFiles": [".vscode/stlink.cfg", ".vscode/stm32h7x.cfg"],
-      "svdFile": "./STM32H723.svd",
-      "swoConfig": {
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "preLaunchCommands": [
+        "monitor reset halt"
+      ],
+      "postLaunchCommands": [
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
+        "monitor rtt start",
+        "monitor rtt server start 9090 0"
+      ],
+      "postRestartCommands": [
+        "monitor halt",
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
+        "monitor rtt start",
+        "monitor rtt server start 9090 0"
+      ],
+      "rttConfig": {
         "enabled": true,
-        "cpuFrequency": 8000000,
-        "swoFrequency": 2000000,
-        "source": "probe",
-        "decoders": [{ "type": "console", "label": "ITM", "port": 0 }]
-      },
-      "stm32cubeprogrammer": "/opt/st/stm32cubeclt_1.16.0/STM32CubeProgrammer/bin"
+        "address": "auto",
+        "decoders": [
+          {
+            "port": 0,
+            "type": "console"
+          }
+        ]
+      }
     },
     {
-      "name": "Debug simulator on Rosetta",
+      "name": "MCU | OpenOCD | Attach (External Server, RTT)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "postAttachCommands": [
+        "monitor rtt setup 0x20000000 0x20020000 \"SEGGER RTT\"",
+        "monitor rtt start",
+        "monitor rtt server start 9090 0"
+      ],
+      "rttConfig": {
+        "enabled": true,
+        "address": "auto",
+        "decoders": [
+          {
+            "port": 0,
+            "type": "console"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MCU | ST-LINK | Build + Debug",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "stlink",
+      "serverpath": "ST-LINK_gdbserver",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "preLaunchCommands": [],
+      "preLaunchTask": "CMake: build"
+    },
+    {
+      "name": "MCU | ST-LINK | Debug (No Build)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "stlink",
+      "serverpath": "ST-LINK_gdbserver",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "preLaunchCommands": []
+    },
+    {
+      "name": "MCU | ST-LINK | Attach (External GDB Server)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "external",
+      "gdbTarget": "localhost:61234",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "postAttachCommands": [
+        "monitor halt"
+      ]
+    },
+    {
+      "name": "MCU | ST-LINK | Attach (No Flash)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/out/build/latest.elf",
+      "servertype": "stlink",
+      "serverpath": "ST-LINK_gdbserver",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "STM32H723ZGTx",
+      "interface": "swd",
+      "svdFile": "${workspaceFolder}/STM32H723.svd",
+      "showDevDebugOutput": "parsed",
+      "runToEntryPoint": "",
+      "postAttachCommands": []
+    },
+    {
+      "name": "SIM | Rosetta | Debug App",
       "type": "cppdbg",
       "request": "launch",
       "program": "out/build/latest.elf",
@@ -58,9 +202,21 @@
           "ignoreFailures": false
         }
       ],
-      "preLaunchTask": "Start Debug Server for Simulator on emulated arch",
+      "preLaunchTask": "SIM | Rosetta | Start Debug Server",
       "cwd": "${workspaceFolder}",
       "externalConsole": false
+    },
+    {
+      "name": "SIM | ST-LIB Tests | Debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/build/simulator/deps/ST-LIB/Tests/st-lib-test",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "externalConsole": false,
+      "stopAtEntry": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "SIM | Tests | Build"
     }
   ]
 }

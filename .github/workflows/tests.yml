@@ -1,0 +1,69 @@
+name: Run Simulator Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+
+    container:
+      image: ghcr.io/hyperloop-upv/hyperloop-firmware-toolchain:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+
+      - name: Init submodules
+        run: |
+          git config --global --add safe.directory '*'
+          git submodule update --init --depth 1
+          ./deps/ST-LIB/tools/init-submodules.sh
+        shell: bash
+
+      - name: Cache simulator deps
+        uses: actions/cache@v4
+        with:
+          path: out/build/simulator/_deps
+          key: template-simulator-deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'deps/ST-LIB/CMakeLists.txt', 'deps/ST-LIB/Tests/CMakeLists.txt') }}
+          restore-keys: |
+            template-simulator-deps-${{ runner.os }}-
+
+      - name: Configure (CMake)
+        run: |
+          cmake --preset simulator
+        shell: bash
+
+      - name: Build
+        run: |
+          cmake --build --preset simulator
+        shell: bash
+
+      - name: Run tests (ctest)
+        run: |
+          ctest --preset simulator-all
+        shell: bash
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-test-reports
+          path: |
+            out/build/simulator/Testing/Temporary/LastTest.log
+            out/build/simulator/deps/ST-LIB/Testing/Temporary/LastTest.log
+          retention-days: 7
+          if-no-files-found: ignore

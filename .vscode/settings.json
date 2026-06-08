@@ -1,11 +1,14 @@
 {
-  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.cppStandard": "c++23",
   "C_Cpp.default.cStandard": "c17",
-  "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 80}",
+  "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 100}",
   "C_Cpp.formatting": "clangFormat",
-  "C_Cpp.clang_format_style": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 80}",
+  "C_Cpp.clang_format_style": "{BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 100}",
   "C_Cpp.clang_format_sortIncludes": true,
   "C_Cpp.intelliSenseCacheSize": 0,
+  "cmake.testExplorerIntegrationEnabled": true,
+  "cmake.defaultConfigurePreset": "simulator",
+  "cmake.defaultBuildPreset": "simulator",
   "files.associations": {
     "condition_variable": "cpp",
     "chrono": "cpp",
@@ -24,6 +27,17 @@
     "deque": "cpp",
     "list": "cpp",
     "vector": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "string_view": "cpp",
+    "ranges": "cpp",
+    "span": "cpp",
+    "bitset": "cpp",
+    "initializer_list": "cpp",
+    "stacktrace": "cpp",
+    "regex": "cpp",
+    "valarray": "cpp",
+    "cstdlib": "cpp",
+    "mutex": "cpp",
+    "shared_mutex": "cpp"
   }
 }
