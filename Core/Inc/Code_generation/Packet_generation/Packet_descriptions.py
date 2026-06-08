@@ -29,7 +29,9 @@ class BoardDescription:
         try:
             with open(JSONpath + "/boards/" + name + "/sockets.json") as s:
                 socks = json.load(s)
-                self.sockets = self.SocketsDescription(socks, self.ip, backend_ip, backend_ports)
+                self.sockets = self.SocketsDescription(
+                    socks, self.ip, backend_ip, backend_ports
+                )
         except Exception as e:
             raise Exception(f"Error in file {JSONpath}/boards/{name}/sockets.json: {e}")
         # Packets:
@@ -99,7 +101,9 @@ class BoardDescription:
         return fixed_packets
 
     class SocketsDescription:
-        def __init__(self, sockets: list, board_ip: str, backend_ip: str, backend_ports: dict):
+        def __init__(
+            self, sockets: list, board_ip: str, backend_ip: str, backend_ports: dict
+        ):
             self.allSockets = []
             self.ServerSockets = []
             self.Sockets = []
@@ -125,7 +129,7 @@ class BoardDescription:
                     remote_ip = sock["remote_ip"]
                     if remote_ip == "backend":
                         remote_ip = self.backend_ip
-                    
+
                     remote_port = sock["remote_port"]
                     if remote_port == "backend":
                         remote_port = self.backend_ports.get("TCP_SERVER", remote_port)
@@ -144,24 +148,24 @@ class BoardDescription:
                     remote_ip = sock["remote_ip"]
                     if remote_ip == "backend":
                         remote_ip = self.backend_ip
-                    
+
                     port = sock["port"]
                     if port == "backend":
                         port = self.backend_ports.get("UDP", port)
 
                     entry = {
-                            "name": name,
-                            "type": sock_type,
-                            "board_ip": self.board_ip,
-                            "port": port,
-                            "remote_ip": remote_ip,
+                        "name": name,
+                        "type": sock_type,
+                        "board_ip": self.board_ip,
+                        "port": port,
+                        "remote_ip": remote_ip,
                     }
                     if "remote_port" in sock:
                         remote_port = sock["remote_port"]
                         if remote_port == "backend":
                             remote_port = self.backend_ports.get("UDP", remote_port)
                         entry["remote_port"] = remote_port
-                        
+
                     self.DatagramSockets.append(entry)
 
 

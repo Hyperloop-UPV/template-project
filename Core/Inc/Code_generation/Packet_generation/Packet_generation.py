@@ -2,7 +2,6 @@ from Packet_generation.Packet_descriptions import BoardDescription
 import json
 import os
 import jinja2
-import sys
 
 templates_path = "Core/Inc/Code_generation/Packet_generation"
 
