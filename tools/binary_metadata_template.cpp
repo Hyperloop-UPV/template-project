@@ -18,7 +18,5 @@ extern "C"{
     const char DESCRIPTION[255]  __attribute__((section(".metadata_pool")))=
         "****************"  // placeholder for beggining
         // the '=' is used for unparsing
-        {% for var_pair in variables -%}
-        "{{var_pair.name}}={{var_pair.value}}"
-        {% endfor %};
+        ;
 }
