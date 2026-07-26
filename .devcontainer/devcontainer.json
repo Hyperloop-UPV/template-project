@@ -1,0 +1,27 @@
+{
+  "name": "STM32 Development Lab",
+  "build": {
+    "dockerfile": "Containerfile"
+  },
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--privileged",
+    "-v", "/dev/bus/usb:/dev/bus/usb"
+  ],
+  "postStartCommand": "stlink-server &",
+  "containerEnv": {
+    "CONTAINER_NAME": "stm32-project"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "marus25.cortex-debug",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools"
+      ]
+    }
+  },
+  "containerUser": "root",
+  "updateRemoteUserUID": false
+}
