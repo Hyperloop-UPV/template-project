@@ -10,7 +10,8 @@ if(BOARD_NAME STREQUAL "")
   message(FATAL_ERROR "BOARD_NAME cannot be empty")
 endif()
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
-set(LD_SCRIPT ${STLIB_DIR}/STM32H723ZGTX_FLASH.ld)
+set(LD_SCRIPT_INPUT ${STLIB_DIR}/LinkerScript.ld)
+set(LD_SCRIPT ${CMAKE_BINARY_DIR}/LinkerScript.ld)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -30,15 +31,10 @@ endif()
 option(USE_ETHERNET "Enable ethernet peripheral" OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
 option(BUILD_EXAMPLES "Build Core/Src/Examples sources" OFF)
+option(ITCM_BUILD "Build code in ITCM (fast execution, no wait states)" OFF)
+set(ITCM_SIZE "64K" CACHE STRING "ITCM size: 64K, 128K, 192K, or 256K")
 option(USE_CCACHE "Use ccache if available" ON)
-if(NOT DEFINED ENABLE_LTO)
-  if(CMAKE_CROSSCOMPILING)
-    set(ENABLE_LTO OFF)
-  else()
-    set(ENABLE_LTO ON)
-  endif()
-endif()
-set(ENABLE_LTO "${ENABLE_LTO}" CACHE BOOL "Enable link-time optimization (LTO)")
+option(ENABLE_LTO "Enable link-time optimization (LTO)" ON)
 
 if(USE_CCACHE)
   find_program(CCACHE_PROGRAM ccache)
@@ -49,9 +45,26 @@ if(USE_CCACHE)
   endif()
 endif()
 
+# Preprocess linker script through C preprocessor
+add_custom_command(
+  OUTPUT ${LD_SCRIPT}
+  COMMAND ${CMAKE_C_COMPILER} -E -P -x c
+    -D__ITCM_BUILD=$<IF:$<BOOL:${ITCM_BUILD}>,1,0>
+    -D__ITCM_SIZE=${ITCM_SIZE}
+    -o ${LD_SCRIPT} ${LD_SCRIPT_INPUT}
+  DEPENDS ${LD_SCRIPT_INPUT}
+  COMMENT "Preprocessing linker script (ITCM_BUILD=${ITCM_BUILD}, ITCM_SIZE=${ITCM_SIZE})"
+)
+
+add_custom_target(preprocess_linker_script
+  DEPENDS ${LD_SCRIPT}
+)
+
 message(STATUS "Template project: CMAKE_CROSSCOMPILING = ${CMAKE_CROSSCOMPILING}")
 message(STATUS "Template project: USE_ETHERNET         = ${USE_ETHERNET}")
 message(STATUS "Template project: TARGET_NUCLEO        = ${TARGET_NUCLEO}")
+message(STATUS "Template project: ITCM_BUILD           = ${ITCM_BUILD}")
+message(STATUS "Template project: ITCM_SIZE            = ${ITCM_SIZE}")
 message(STATUS "Template project: BOARD_NAME           = ${BOARD_NAME}")
 
 add_subdirectory(${STLIB_DIR})
@@ -142,8 +155,10 @@ if(CMAKE_CROSSCOMPILING)
     ${SOURCE_H}
     ${SOURCE_HPP}
 
-    $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/startup_stm32h723zgtx.s>
+    $<$<BOOL:${CMAKE_CROSSCOMPILING}>:${STLIB_DIR}/StartupCode.s>
   )
+
+  add_dependencies(${EXECUTABLE} preprocess_linker_script)
 
   target_link_libraries(${EXECUTABLE} PRIVATE
     ${STLIB_LIBRARY}
@@ -154,6 +169,7 @@ if(CMAKE_CROSSCOMPILING)
     CXX_STANDARD_REQUIRED YES
     C_STANDARD 17
     C_STANDARD_REQUIRED YES
+    LINK_DEPENDS ${LD_SCRIPT}
   )
 
   target_compile_definitions(${EXECUTABLE} PRIVATE
@@ -161,6 +177,8 @@ if(CMAKE_CROSSCOMPILING)
     $<$<BOOL:${USE_ETHERNET}>:STLIB_ETH>
     $<IF:$<BOOL:${TARGET_NUCLEO}>,NUCLEO,BOARD>
     $<IF:$<BOOL:${TARGET_NUCLEO}>,HSE_VALUE=8000000,HSE_VALUE=25000000>
+    __ITCM_BUILD=$<IF:$<BOOL:${ITCM_BUILD}>,1,0>
+    __ITCM_SIZE=${ITCM_SIZE}
   )
 
   target_compile_options(${EXECUTABLE} PRIVATE
@@ -174,6 +192,8 @@ if(CMAKE_CROSSCOMPILING)
     -ffunction-sections
     -fdata-sections
     -fno-exceptions
+
+    $<$<AND:$<BOOL:${ENABLE_LTO}>,$<NOT:$<CONFIG:DEBUG>>>:-flto=auto>
 
     -Wno-psabi
 
@@ -202,14 +222,12 @@ if(CMAKE_CROSSCOMPILING)
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-lnosys>
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,-Map=${PROJECT_NAME}.map,--cref>
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,--gc-sections>
+
+    $<$<AND:$<BOOL:${ENABLE_LTO}>,$<NOT:$<CONFIG:DEBUG>>>:-flto>
   )
 
   add_dependencies(${EXECUTABLE} run_generator generate_binary_metadata)
 
-  if(ENABLE_LTO)
-    set_property(TARGET ${EXECUTABLE} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-    set_property(TARGET ${EXECUTABLE} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
-  endif()
 
   # Post-build: Copy binary to out/build/latest.elf and create marker for BOARD builds
   add_custom_command(TARGET ${EXECUTABLE} POST_BUILD

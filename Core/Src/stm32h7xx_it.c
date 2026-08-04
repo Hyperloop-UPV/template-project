@@ -1,62 +1,6 @@
-/* USER CODE BEGIN Header */
-/**
- ******************************************************************************
- * @file    stm32h7xx_it.c
- * @brief   Interrupt Service Routines.
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-/* USER CODE END Header */
-
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32h7xx_it.h"
-#include "stm32h7xx_hal.h"
 #include "HALAL/HardFault/HardfaultTrace.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
-
-/* USER CODE END TD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/* External variables --------------------------------------------------------*/
 extern ETH_HandleTypeDef heth;
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc2;
@@ -81,9 +25,6 @@ extern uint32_t _sstack;
 extern uint32_t _estack;
 extern uint32_t _hf_stack_start;
 extern uint32_t _hf_stack_end;
-/* USER CODE BEGIN EV */
-
-/* USER CODE END EV */
 
 /******************************************************************************/
 /*           Cortex Processor Interruption and Exception Handlers          */
@@ -101,7 +42,8 @@ extern uint32_t _hf_stack_end;
                          "mrsne r0, psp             \n"                                            \
                                                                                                    \
                          /* Switch to dedicated HardFault stack */                                 \
-                         "ldr r1, =_hf_stack_end    \n"                                            \
+                          "movw r1, #:lower16:_hf_stack_end\n"\
+                          "movt r1, #:upper16:_hf_stack_end\n"\
                          "msr msp, r1               \n"                                            \
                          "isb                       \n"                                            \
                                                                                                    \
