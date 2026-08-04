@@ -101,7 +101,8 @@ extern uint32_t _hf_stack_end;
                          "mrsne r0, psp             \n"                                            \
                                                                                                    \
                          /* Switch to dedicated HardFault stack */                                 \
-                         "ldr r1, =_hf_stack_end    \n"                                            \
+                          "movw r1, #:lower16:_hf_stack_end\n"\
+                          "movt r1, #:upper16:_hf_stack_end\n"\
                          "msr msp, r1               \n"                                            \
                          "isb                       \n"                                            \
                                                                                                    \
