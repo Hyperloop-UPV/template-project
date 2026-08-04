@@ -34,14 +34,7 @@ option(BUILD_EXAMPLES "Build Core/Src/Examples sources" OFF)
 option(ITCM_BUILD "Build code in ITCM (fast execution, no wait states)" OFF)
 set(ITCM_SIZE "64K" CACHE STRING "ITCM size: 64K, 128K, 192K, or 256K")
 option(USE_CCACHE "Use ccache if available" ON)
-if(NOT DEFINED ENABLE_LTO)
-  if(CMAKE_CROSSCOMPILING)
-    set(ENABLE_LTO OFF)
-  else()
-    set(ENABLE_LTO ON)
-  endif()
-endif()
-set(ENABLE_LTO "${ENABLE_LTO}" CACHE BOOL "Enable link-time optimization (LTO)")
+option(ENABLE_LTO "Enable link-time optimization (LTO)" ON)
 
 if(USE_CCACHE)
   find_program(CCACHE_PROGRAM ccache)
@@ -200,6 +193,8 @@ if(CMAKE_CROSSCOMPILING)
     -fdata-sections
     -fno-exceptions
 
+    $<$<AND:$<BOOL:${ENABLE_LTO}>,$<NOT:$<CONFIG:DEBUG>>>:-flto=auto>
+
     -Wno-psabi
 
     $<$<COMPILE_LANGUAGE:C>:-w>
@@ -227,14 +222,12 @@ if(CMAKE_CROSSCOMPILING)
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-lnosys>
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,-Map=${PROJECT_NAME}.map,--cref>
     $<$<BOOL:${CMAKE_CROSSCOMPILING}>:-Wl,--gc-sections>
+
+    $<$<AND:$<BOOL:${ENABLE_LTO}>,$<NOT:$<CONFIG:DEBUG>>>:-flto>
   )
 
   add_dependencies(${EXECUTABLE} run_generator generate_binary_metadata)
 
-  if(ENABLE_LTO)
-    set_property(TARGET ${EXECUTABLE} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-    set_property(TARGET ${EXECUTABLE} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
-  endif()
 
   # Post-build: Copy binary to out/build/latest.elf and create marker for BOARD builds
   add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
