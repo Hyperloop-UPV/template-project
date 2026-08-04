@@ -3,15 +3,20 @@
 * DO NOT MODIFY MANUALLY!!!
 */
 extern "C"{
+    // about 30 is the maximum but do 32 for alignment
+    const char COMPILATION_DATE[32] = "{{ DateTimeISO8601 }}";
+
+    // 16 bytes because short hash is 8 bytes + null terminator + alignment
+    const char STLIB_COMMIT_HASH[16] = "{{ STLIB_COMMIT }}";
+
+    // 16 bytes because short hash is 8 bytes + null terminator + alignment
+    const char ADJ_COMMIT_HASH[16] = "{{ ADJ_COMMIT}}";
+
+    // 16 bytes because short hash is 8 bytes + null terminator + alignment
+    const char BOARD_COMMIT_HASH[16] = "{{ BOARD_COMMIT }}";
+
     const char DESCRIPTION[255]  __attribute__((section(".metadata_pool")))=
         "****************"  // placeholder for beggining
-        "{{ DateTimeISO8601 }}"   // DateTime using ISO-8601 format
-        " "                 // alignment
-        "{{ STLIB_COMMIT }}"          // STLIB commit
-        "{{ ADJ_COMMIT}}"          // ADJ commit
-        "{{ BOARD_COMMIT }}"          // Board commit
         // the '=' is used for unparsing
-        {% for var_pair in variables -%}
-        "{{var_pair.name}}={{var_pair.value}}"
-        {% endfor %};
+        ;
 }

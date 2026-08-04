@@ -72,7 +72,7 @@ def main() -> None:
 
     iso_time = datetime.now().strftime("%Y%m%dT%H%M%S")
     stlib_commit = get_current_commit(repo_root / "deps/ST-LIB")
-    adj_commit = get_current_commit(repo_root / "deps/adj")
+    adj_commit = get_current_commit(repo_root / "Core/Inc/Code_Generation/JSON_ADE")
     board_commit = get_current_commit(repo_root)
 
     output_file = repo_root / "Core/Src/Runes/generated_metadata.cpp"

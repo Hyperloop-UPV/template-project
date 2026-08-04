@@ -1,5 +1,6 @@
 #ifdef EXAMPLE_LINEAR_SENSOR_CHARACTERIZATION
 
+#include "ErrorHandler/ErrorHandler.hpp"
 #include "Communications/Packets/DataPackets.hpp"
 #include "Communications/Packets/OrderPackets.hpp"
 #include "ST-LIB.hpp"
@@ -49,12 +50,6 @@ constexpr auto eth = EthernetDomain::Ethernet(
 #endif
 using ExampleEthernetBoard = ST_LIB::Board<ST_LIB::DefaultFaultPolicy, eth, sensor>;
 
-extern "C" void Error_Handler(void) {
-    PANIC("HAL error handler triggered");
-    while (1) {
-    }
-}
-
 void characterize(float raw, double read) {
     // Incremental OLS accumulators for y = slope * x + offset.
     static uint64_t sample_count{0};
@@ -91,7 +86,6 @@ int main(void) {
     Hard_fault_check();
     ExampleEthernetBoard::init();
 
-    Scheduler::start();
     // Comms
     OrderPackets::characterize_init(real_value);
     DataPackets::characterization_init(slope, offset);

@@ -729,4 +729,17 @@ int main(void) {
 }
 #endif
 
+void Error_Handler(void) {
+    PANIC("HAL error handler triggered");
+    while (1) {
+    }
+}
+
+extern "C" {
+void assert_failed(uint8_t* file, uint32_t line) {
+    while (1) {
+    }
+}
+}
+
 #endif

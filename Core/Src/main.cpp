@@ -1,6 +1,7 @@
 #include "main.h"
 
 #include "ST-LIB.hpp"
+#include "ErrorHandler/ErrorHandler.hpp"
 
 using namespace ST_LIB;
 
