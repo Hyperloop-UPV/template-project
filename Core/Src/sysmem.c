@@ -51,8 +51,8 @@ static uint32_t* __sbrk_heap_end = NULL;
  * @return Pointer to allocated memory
  */
 void* _sbrk(ptrdiff_t incr) {
-    extern uint32_t _end;             /* Symbol defined in the linker script */
-    extern uint32_t _estack;          /* Symbol defined in the linker script */
+    extern uint32_t _end;            /* Symbol defined in the linker script */
+    extern uint32_t _estack;         /* Symbol defined in the linker script */
     extern uint32_t _Min_Stack_Size; /* Symbol defined in the linker script */
     const uint32_t stack_limit = (uint32_t)&_estack - (uint32_t)&_Min_Stack_Size;
     const uint32_t* max_heap = (uint32_t*)stack_limit;
